@@ -1,0 +1,16 @@
+spring:
+  main:
+    lazy-initialization: true
+  liquibase:
+    enabled: true
+    change-log: classpath:migration/migration.xml
+
+app:
+  jwt:
+    secret: test-secret
+    access-token-expiration: 15m
+    refresh-token-expiration: 30d
+
+logging:
+  level:
+    org.springframework.jdbc.core: TRACE
