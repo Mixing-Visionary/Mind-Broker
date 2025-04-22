@@ -1,0 +1,64 @@
+name: Deploy release
+
+on:
+  pull_request:
+    branches: ['release/**']
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  build:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 19
+        uses: actions/setup-java@v4
+        with:
+          java-version: '19'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build package
+        run: mvn -B clean package -Dmaven.test.skip=true
+
+      - name: Upload artifacts to VM
+        env:
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_IP: ${{ secrets.VM_IP }}
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+        run: |
+          ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
+          scp -i <(echo "$SSH_KEY") \
+           target/*.jar \
+           Dockerfile \
+           $VM_USER@$VM_IP:/mind-broker/
+
+      - name: Run migrations and deploy
+        env:
+          VM_USER: ${{ secrets.VM_USER }}
+          VM_IP: ${{ secrets.VM_IP }}
+          SSH_KEY: ${{ secrets.VM_SSH_KEY }}
+          DB_URL: ${{ secrets.DB_URL }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        run: |
+          ssh -i <(echo "$SSH_KEY") $VM_USER@$VM_IP "
+            cd /mind-broker && 
+            docker build -t mind-broker . && 
+            java -jar mind-broker.jar --spring.liquibase.url=$DB_URL \
+                              --spring.liquibase.user=$DB_USERNAME \
+                              --spring.liquibase.password=$DB_PASSWORD \
+                              --spring.main.web-application-type=none && 
+            docker stop mind-broker || true && 
+            docker rm mind-broker || true && 
+            docker run -d --name mind-broker \
+              -p 8080:8080 mind-broker \
+              -e DB_URL=$DB_URL \
+              -e DB_USERNAME=$DB_USERNAME \
+              -e DB_PASSWORD=$DB_PASSWORD \
+              -e JWT_SECRET=$JWT_SECRET \
+              mind-broker
+          "
