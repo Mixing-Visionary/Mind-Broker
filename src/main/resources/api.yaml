@@ -1,0 +1,178 @@
+openapi: 3.0.3
+info:
+  title: Visionary
+  description: |-
+    Приложение для обработки изображений в разные стили.
+  version: 1.0.0
+tags:
+  - name: auth
+    description: Операции, связанные с авторизацией, регистрацией пользователя
+paths:
+  /api/v1/auth/register:
+    post:
+      tags:
+        - auth
+      summary: Регистрация нового пользователя по никнейму
+      operationId: register
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+        required: true
+      responses:
+        '200':
+          description: Пользователь успешно зарегистрирован
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Пользователь с таким никнеймом уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/auth/login:
+    post:
+      tags:
+        - auth
+      summary: Аутентификация уже существующего пользователя
+      operationId: login
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+        required: true
+      responses:
+        '200':
+          description: Пользователь успешно залогинен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь с такими данными не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/auth/refresh:
+    post:
+      tags:
+        - auth
+      summary: Обновление access-токена
+      operationId: refresh
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RefreshRequest"
+      responses:
+        '200':
+          description: Access-токен успешно обновлен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Refresh токен не валиден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        errorCode:
+          type: integer
+          example: -1
+          description: Код ошибки
+        message:
+          type: string
+          example: "Описание ошибки"
+          description: Описание ошибки
+      required:
+        - errorCode
+        - message
+    RegisterRequest:
+      type: object
+      properties:
+        nickname:
+          type: string
+          minLength: 4
+          maxLength: 25
+          pattern: ^\S(.*\S)?$
+          example: "admin"
+          description: Никнейм пользователя
+        email:
+          type: string
+          format: email
+          example: "my_mail@email.com"
+          description: Почта пользователя
+        password:
+          type: string
+          format: password
+          minLength: 8
+          example: "myP4ssw0rd"
+          description: Пароль пользователя
+      required:
+        - nickname
+        - email
+        - password
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+          example: "my_mail@email.com"
+          description: Почта пользователя
+        password:
+          type: string
+          format: password
+          example: "myP4ssw0rd"
+          description: Пароль пользователя
+      required:
+        - email
+        - password
+    RefreshRequest:
+      type: object
+      properties:
+        refreshToken:
+          type: string
+          example: "$2a$10$taxVDg/YdruyrjwaOK2JqeeHKaJVuWN963e98XciQlwpvilR07OTe"
+          description: Refresh-токен пользователя
+      required:
+        - refreshToken
+    AuthResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+          example: "$2a$10$taxVDg/YdruyrjwaOK2JqeeHKaJVuWN963e98XciQlwpvilR07OTe"
+          description: Access-токен пользователя
+        refreshToken:
+          type: string
+          example: "$2a$10$taxVDg/YdruyrjwaOK2JqeeHKaJVuWN963e98XciQlwpvilR07OTe"
+          description: Refresh-токен пользователя
+      required:
+        - accessToken
+        - refreshToken
