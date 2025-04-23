@@ -4,6 +4,9 @@ on:
   push:
     branches: ['release/**']
 
+env:
+  DOCKER_BUILDKIT: 1
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,7 +22,7 @@ jobs:
           cache: maven
 
       - name: Build package
-        run: mvn -B clean package -Dmaven.test.skip=true
+        run: mvn -B clean package -DskipTests
 
       - name: Upload artifacts to VM
         env:
@@ -27,11 +30,16 @@ jobs:
           VM_IP: ${{ secrets.VM_IP }}
           SSH_KEY: ${{ secrets.VM_SSH_KEY }}
         run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
           ssh-keyscan -H $VM_IP >> ~/.ssh/known_hosts
-          scp -i <(echo "$SSH_KEY") \
-           target/*.jar \
-           Dockerfile \
-           $VM_USER@$VM_IP:/mind-broker/
+          echo "$SSH_KEY" > key
+          chmod 600 key
+
+          scp -i key \
+            target/mind-broker.jar \
+            Dockerfile \
+            $VM_USER@$VM_IP:/mind-broker/
 
       - name: Run migrations and deploy
         env:
@@ -43,20 +51,44 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
-          ssh -i <(echo "$SSH_KEY") $VM_USER@$VM_IP "
-            cd /mind-broker && 
-            docker build -t mind-broker . && 
-            java -jar mind-broker.jar --spring.liquibase.url=$DB_URL \
-                              --spring.liquibase.user=$DB_USERNAME \
-                              --spring.liquibase.password=$DB_PASSWORD \
-                              --spring.main.web-application-type=none && 
-            docker stop mind-broker || true && 
-            docker rm mind-broker || true && 
-            docker run -d --name mind-broker \
-              -p 8080:8080 mind-broker \
-              -e DB_URL=$DB_URL \
-              -e DB_USERNAME=$DB_USERNAME \
-              -e DB_PASSWORD=$DB_PASSWORD \
-              -e JWT_SECRET=$JWT_SECRET \
-              mind-broker
-          "
+          echo "$SSH_KEY" > key
+          chmod 600 key
+          ssh -i key $VM_USER@$VM_IP /bin/bash -s -- \
+            "$DB_URL" \
+            "$DB_USERNAME" \
+            "$DB_PASSWORD" \
+            "$JWT_SECRET" << 'EOF'
+
+            cd /mind-broker
+
+            DB_URL=$1
+            DB_USERNAME=$2
+            DB_PASSWORD=$3
+            JWT_SECRET=$4
+
+            docker build -t mind-broker:latest .
+
+            docker run --rm \
+              -e SPRING_DATASOURCE_URL="$DB_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
+              -e JWT_SECRET="$JWT_SECRET" \
+              -e SPRING_MAIN_WEB-APPLICATION-TYPE=none \
+              mind-broker:latest || exit 1
+
+            echo "Migration completed"
+  
+            docker stop mind-broker || true
+            docker rm mind-broker || true
+
+            docker run -d \
+              --name mind-broker \
+              -p 8080:8080 \
+              -e SPRING_DATASOURCE_URL="$DB_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
+              -e JWT_SECRET="$JWT_SECRET" \
+              mind-broker:latest
+
+            echo "Deployment completed successfully"
+          EOF

@@ -1,10 +1,9 @@
-FROM eclipse-temurin:19-jdk-jammy
+FROM eclipse-temurin:19-jre-jammy
 WORKDIR /mind-broker
-
-COPY target/*.jar mind-broker.jar
+COPY ./mind-broker.jar ./app.jar
 
 ENV TZ=Europe/Moscow
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "mind-broker.jar"]
+ENTRYPOINT ["java", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
