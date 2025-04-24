@@ -36,8 +36,8 @@ public class UserRepository {
 
     public User save(User user) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nickname", user.getNickname())
-                .addValue("email", user.getEmail())
+                .addValue("nickname", user.getNickname().toLowerCase())
+                .addValue("email", user.getEmail().toLowerCase())
                 .addValue("password", user.getPassword());
 
         Long id = jdbcTemplate.queryForObject(INSERT_USER, params, Long.class);
@@ -46,7 +46,7 @@ public class UserRepository {
 
     public User findByEmail(String email) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("email", email);
+                .addValue("email", email.toLowerCase());
 
         try {
             return jdbcTemplate.queryForObject(FIND_BY_EMAIL, params, userRowMapper);
@@ -57,8 +57,8 @@ public class UserRepository {
 
     public User findByEmailOrNickname(String email, String nickname) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("email", email)
-                .addValue("nickname", nickname);
+                .addValue("email", email.toLowerCase())
+                .addValue("nickname", nickname.toLowerCase());
 
         try {
             return jdbcTemplate.queryForObject(FIND_BY_EMAIL_OR_NICKNAME, params, userRowMapper);
