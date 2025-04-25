@@ -6,14 +6,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import ru.visionary.mixing.mind_broker.entity.RefreshToken;
-import ru.visionary.mixing.mind_broker.entity.User;
-import ru.visionary.mixing.mind_broker.exception.ErrorCode;
-import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.generated.model.AuthResponse;
 import ru.visionary.mixing.generated.model.LoginRequest;
 import ru.visionary.mixing.generated.model.RefreshRequest;
 import ru.visionary.mixing.generated.model.RegisterRequest;
+import ru.visionary.mixing.mind_broker.entity.RefreshToken;
+import ru.visionary.mixing.mind_broker.entity.User;
+import ru.visionary.mixing.mind_broker.exception.ErrorCode;
+import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.security.JwtTokenProvider;
@@ -34,16 +34,12 @@ import static org.mockito.Mockito.verify;
 class AuthServiceTest {
     @Mock
     private UserRepository userRepository;
-
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
-
     @Mock
     private JwtTokenProvider jwtTokenProvider;
-
     @Mock
     private PasswordEncoder passwordEncoder;
-
     @Mock
     private AuthMapper authMapper;
 

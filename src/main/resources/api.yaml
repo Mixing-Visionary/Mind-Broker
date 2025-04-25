@@ -7,6 +7,8 @@ info:
 tags:
   - name: auth
     description: Операции, связанные с авторизацией, регистрацией пользователя
+  - name: image
+    description: Операции, связанные с изображениями
 paths:
   /api/v1/auth/register:
     post:
@@ -60,7 +62,7 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
-        '404':
+        '401':
           description: Пользователь с такими данными не найден
           content:
             application/json:
@@ -96,6 +98,50 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/image/save:
+    post:
+      tags:
+        - image
+      summary: Сохранение обработанного изображения на сервере
+      operationId: saveImage
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/SaveImageRequest"
+      responses:
+        '200':
+          description: Изображение успешно сохранено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SaveImageResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '413':
+          description: Изображение слишком большого размера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '415':
+          description: Изображение в неподдерживаемом формате
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: [ ]
 components:
   schemas:
     ErrorResponse:
@@ -176,3 +222,36 @@ components:
       required:
         - accessToken
         - refreshToken
+    SaveImageRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+          nullable: false
+          description: Изображение, которое необходимо сохранить
+        protection:
+          type: string
+          example: "public"
+          description: Уровень доступа к изображению (публичный или приватный)
+          enum:
+            - public
+            - private
+      required:
+        - image
+        - protection
+    SaveImageResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+          description: UUID сохраненного изображения
+      required:
+        - uuid
+  securitySchemes:
+    jwt-token:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT-токен пользователя

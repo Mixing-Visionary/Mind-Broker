@@ -8,8 +8,13 @@ spring:
 app:
   jwt:
     secret: test-secret
-    access-token-expiration: 15m
-    refresh-token-expiration: 30d
+    access-token-expiration: PT15M
+    refresh-token-expiration: P30D
+  minio:
+    endpoint: http://minio.url/
+    access-key: minio-access-key
+    secret-key: minio-secret-key
+    bucket-name: images
 
 logging:
   level:

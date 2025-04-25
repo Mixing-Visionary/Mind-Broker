@@ -47,7 +47,7 @@ public class JwtTokenProvider {
 
     private Date parseExpiration(String expiration) {
         return new Date(System.currentTimeMillis() +
-                Duration.parse("PT" + expiration.toUpperCase()).toMillis());
+                Duration.parse(expiration).toMillis());
     }
 
     public boolean validateToken(String token) {
