@@ -12,7 +12,7 @@ jobs:
       - name: Check branch name format
         run: |
           branch_name="${{ github.head_ref }}"
-          regex="^SCRUM-[1-9][0-9]*$"
+          regex="^((SCRUM-[1-9][0-9]*)|(release\/.*))$"
           echo "Branch name: $branch_name"
           
           if [[ ! "$branch_name" =~ $regex ]]; then
@@ -28,7 +28,7 @@ jobs:
       - name: Check pull request title format
         run: |
           pr_title="${{ github.event.pull_request.title }}"
-          regex="^SCRUM-[1-9][0-9]* .+"
+          regex="^((SCRUM-[1-9][0-9]*)|(release)) .+$"
           echo "Pull request title: $pr_title"
           
           if [[ ! "$pr_title" =~ $regex ]]; then
