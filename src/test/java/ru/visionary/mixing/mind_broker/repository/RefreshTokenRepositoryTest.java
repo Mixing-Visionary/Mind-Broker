@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest
 class RefreshTokenRepositoryTest extends AbstractRepositoryTest {
@@ -20,11 +21,7 @@ class RefreshTokenRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void saveAndFindByToken_ShouldWork() {
-        User user = new User()
-                .setNickname("tokenuser")
-                .setEmail("token@example.com")
-                .setPassword("pass");
-        userRepository.save(user);
+        User user = userRepository.save(createTestUser());
 
         RefreshToken token = new RefreshToken()
                 .setToken("test-token")
@@ -37,5 +34,31 @@ class RefreshTokenRepositoryTest extends AbstractRepositoryTest {
         assertNotNull(saved.getId());
         assertEquals("test-token", found.getToken());
         assertEquals(user.getId(), found.getUser().getId());
+    }
+
+    @Test
+    void deleteByUser_ExistingTokens_RemovesAllTokens() {
+        User user = userRepository.save(createTestUser());
+        refreshTokenRepository.save(createTestToken(user, "token1"));
+        refreshTokenRepository.save(createTestToken(user, "token2"));
+
+        refreshTokenRepository.deleteByUser(user.getId());
+
+        assertNull(refreshTokenRepository.findByToken("token1"));
+        assertNull(refreshTokenRepository.findByToken("token2"));
+    }
+
+    private User createTestUser() {
+        return new User()
+                .setNickname("tokenuser")
+                .setEmail("token@example.com")
+                .setPassword("pass");
+    }
+
+    private RefreshToken createTestToken(User user, String token) {
+        return new RefreshToken()
+                .setToken(token)
+                .setUser(user)
+                .setExpiryDate(LocalDateTime.now().plusDays(1));
     }
 }

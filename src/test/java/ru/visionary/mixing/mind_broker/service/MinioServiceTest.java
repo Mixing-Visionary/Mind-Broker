@@ -65,4 +65,23 @@ class MinioServiceTest {
 
         assertEquals(ErrorCode.FAILED_UPLOAD_MINIO, exception.getErrorCode());
     }
+
+    @Test
+    void deleteFile_SuccessfulDeletion_NoExceptions() {
+        UUID uuid = UUID.randomUUID();
+        doReturn("test-bucket").when(minioProperties).getBucketName();
+
+        assertDoesNotThrow(() -> minioService.deleteFile(uuid));
+    }
+
+    @Test
+    void deleteFile_DeletionFailure_ThrowsException() throws Exception {
+        UUID uuid = UUID.randomUUID();
+        doReturn("test-bucket").when(minioProperties).getBucketName();
+        doThrow(new RuntimeException()).when(minioClient).removeObject(any());
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> minioService.deleteFile(uuid));
+        assertEquals(ErrorCode.FAILED_DELETE_MINIO, ex.getErrorCode());
+    }
 }

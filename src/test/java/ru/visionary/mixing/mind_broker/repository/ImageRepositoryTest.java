@@ -11,9 +11,11 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
@@ -73,6 +75,37 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
         UUID id2 = imageRepository.save(image2);
 
         assertNotEquals(id1, id2);
+    }
+
+    @Test
+    void findById_ExistingImage_ReturnsImage() {
+        User user = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(user));
+
+        Image found = imageRepository.findById(imageId);
+        assertNotNull(found);
+        assertEquals(imageId, found.getId());
+    }
+
+    @Test
+    void updateProtection_ValidRequest_UpdatesDatabase() {
+        User user = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(user));
+
+        imageRepository.updateProtection(imageId, Protection.PRIVATE);
+
+        Image updated = imageRepository.findById(imageId);
+        assertEquals(Protection.PRIVATE, updated.getProtection());
+    }
+
+    @Test
+    void deleteById_ExistingImage_RemovesFromDatabase() {
+        User user = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(user));
+
+        imageRepository.deleteById(imageId);
+
+        assertNull(imageRepository.findById(imageId));
     }
 
     private User createTestUser() {
