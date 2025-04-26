@@ -10,6 +10,10 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:migration/migration.xml
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
   security:
     filter:
       order: 0
@@ -17,8 +21,13 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    access-token-expiration: 15m
-    refresh-token-expiration: 30d
+    access-token-expiration: PT15M
+    refresh-token-expiration: P30D
+  minio:
+    endpoint: ${MINIO_URL}
+    access-key: ${MINIO_ACCESS_KEY}
+    secret-key: ${MINIO_SECRET_KEY}
+    bucket-name: images
 
 springdoc:
   api-docs:

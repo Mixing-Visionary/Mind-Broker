@@ -9,12 +9,12 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.visionary.mixing.mind_broker.exception.ErrorCode;
-import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.generated.model.AuthResponse;
 import ru.visionary.mixing.generated.model.LoginRequest;
 import ru.visionary.mixing.generated.model.RefreshRequest;
 import ru.visionary.mixing.generated.model.RegisterRequest;
+import ru.visionary.mixing.mind_broker.exception.ErrorCode;
+import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.security.JwtTokenProvider;
 import ru.visionary.mixing.mind_broker.service.AuthService;
 
@@ -30,10 +30,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private ObjectMapper objectMapper;
-
     @MockBean
     private AuthService authService;
 

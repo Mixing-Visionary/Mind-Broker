@@ -9,8 +9,12 @@ import liquibase.exception.LiquibaseException;
 import liquibase.resource.ClassLoaderResourceAccessor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -29,6 +33,9 @@ import java.sql.SQLException;
 @ActiveProfiles("test")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_CLASS)
 public abstract class AbstractRepositoryTest {
+    @Autowired
+    protected NamedParameterJdbcTemplate jdbcTemplate;
+
     @Container
     private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:latest")
             .withDatabaseName("testdb")
@@ -50,6 +57,13 @@ public abstract class AbstractRepositoryTest {
     static void init() {
         postgres.start();
         applyMigrations();
+    }
+
+    @AfterEach
+    void cleanupDatabase() {
+        jdbcTemplate.update("DELETE FROM image", new MapSqlParameterSource());
+        jdbcTemplate.update("DELETE FROM refresh_token", new MapSqlParameterSource());
+        jdbcTemplate.update("DELETE FROM users", new MapSqlParameterSource());
     }
 
     private static void applyMigrations() throws LiquibaseException {

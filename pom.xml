@@ -17,6 +17,7 @@
         <spring-boot.version>3.4.4</spring-boot.version>
         <postgresql.version>42.7.5</postgresql.version>
         <liquibase.version>4.31.1</liquibase.version>
+        <minio.version>8.5.17</minio.version>
         <jjwt.version>0.12.6</jjwt.version>
         <lombok.version>1.18.38</lombok.version>
         <mapstruct.version>1.6.3</mapstruct.version>
@@ -57,6 +58,13 @@
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
             <version>${liquibase.version}</version>
+        </dependency>
+
+        <!--Minio-->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>${minio.version}</version>
         </dependency>
 
         <!--Security-->

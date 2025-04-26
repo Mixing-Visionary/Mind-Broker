@@ -15,7 +15,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 class RefreshTokenRepositoryTest extends AbstractRepositoryTest {
     @Autowired
     private RefreshTokenRepository refreshTokenRepository;
-
     @Autowired
     private UserRepository userRepository;
 
