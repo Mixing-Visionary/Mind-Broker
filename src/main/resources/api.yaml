@@ -7,6 +7,8 @@ info:
 tags:
   - name: auth
     description: Операции, связанные с авторизацией, регистрацией пользователя
+  - name: user
+    description: Операции, связанные с пользователями
   - name: image
     description: Операции, связанные с изображениями
 paths:
@@ -142,6 +144,140 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - jwt-token: [ ]
+  /api/v1/image/{uuid}:
+    get:
+      tags:
+        - image
+      summary: Получить данные изображения по uuid
+      operationId: getImage
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, которое нужно получить
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImageResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
+        - jwt-token: []
+    put:
+      tags:
+        - image
+      summary: Обновить уровень доступа к изображению
+      operationId: updateImage
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, которое необходимо обновить
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateImageRequest"
+      responses:
+        '200':
+          description: Изображение успешно обновлено
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+    delete:
+      tags:
+        - image
+      summary: Удалить сохраненное изображение
+      operationId: deleteImage
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, которое необходимо удалить
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      responses:
+        '200':
+          description: Изображение успешно удалено
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Недостаточно прав
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
 components:
   schemas:
     ErrorResponse:
@@ -245,10 +381,50 @@ components:
       properties:
         uuid:
           type: string
+          format: uuid
           example: "743c8075-7d10-4834-8706-78b8fe88b352"
           description: UUID сохраненного изображения
       required:
         - uuid
+    ImageResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+          description: UUID сохраненного изображения
+        protection:
+          type: string
+          example: "public"
+          description: Уровень доступа к изображению
+          enum:
+            - public
+            - private
+        authorId:
+          type: integer
+          format: int64
+          example: 1
+          description: id автора изображения
+          minimum: 1
+        authorNickname:
+          type: string
+          example: "admin"
+          description: Никнейм автора изображения
+      required:
+        - uuid
+    UpdateImageRequest:
+      type: object
+      properties:
+        protection:
+          type: string
+          example: public
+          description: Новый уровень доступа к изображению (публичный или приватный)
+          enum:
+            - public
+            - private
+      required:
+        - protection
   securitySchemes:
     jwt-token:
       type: http

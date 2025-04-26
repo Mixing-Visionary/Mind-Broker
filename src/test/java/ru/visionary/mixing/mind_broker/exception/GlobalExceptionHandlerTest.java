@@ -32,7 +32,7 @@ class GlobalExceptionHandlerTest {
         ConstraintViolationException ex = mock(ConstraintViolationException.class);
         ResponseEntity<Object> response = handler.handleConstraintViolationException(ex);
 
-        assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
     }
 
     @Test

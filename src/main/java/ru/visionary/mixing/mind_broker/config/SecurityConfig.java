@@ -3,6 +3,7 @@ package ru.visionary.mixing.mind_broker.config;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -23,12 +24,23 @@ public class SecurityConfig {
     private final JwtTokenProvider jwtTokenProvider;
     private final UserDetailsService userDetailsService;
 
+    private static final String[] WITHOUT_AUTHORIZATION_ALL_METHODS = new String[] {
+            "/api/v1/auth/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+    };
+
+    private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
+            "/api/v1/image/**"
+    };
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/auth/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(WITHOUT_AUTHORIZATION_ALL_METHODS).permitAll()
+                        .requestMatchers(HttpMethod.GET, WITHOUT_AUTHORIZATION_ONLY_GET).permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session

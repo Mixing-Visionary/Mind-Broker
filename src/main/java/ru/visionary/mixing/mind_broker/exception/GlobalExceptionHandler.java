@@ -27,7 +27,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex) {
         log.error("Database error occurred: {}", ex.getMessage());
-        return createResponse(ErrorCode.DATABASE_EXCEPTION);
+        return createResponse(ErrorCode.INVALID_REQUEST);
     }
 
     @Override

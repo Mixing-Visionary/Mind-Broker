@@ -19,8 +19,10 @@ public enum ErrorCode {
     FILE_TOO_LARGE(-10, "Файл слишком большой", HttpStatus.PAYLOAD_TOO_LARGE),
     USER_NOT_AUTHORIZED(-11, "Пользователь не авторизован", HttpStatus.UNAUTHORIZED),
     ACCESS_FORBIDEN(-12, "Нет доступа", HttpStatus.FORBIDDEN),
+    IMAGE_NOT_FOUND(-13, "Изображение не найдено", HttpStatus.NOT_FOUND),
     DATABASE_EXCEPTION(-100, "Ошибка записи в БД", HttpStatus.INTERNAL_SERVER_ERROR),
-    FAILED_UPLOAD_MINIO(-101, "Не удалось загрузить файл в MinIO", HttpStatus.INTERNAL_SERVER_ERROR);
+    FAILED_UPLOAD_MINIO(-101, "Не удалось загрузить файл в MinIO", HttpStatus.INTERNAL_SERVER_ERROR),
+    FAILED_DELETE_MINIO(-102, "Не удалось удалить файл из MinIO", HttpStatus.INTERNAL_SERVER_ERROR);
 
     private final int errorCode;
     private final String message;
