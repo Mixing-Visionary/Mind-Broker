@@ -69,12 +69,19 @@ class ImageServiceTest {
     @Test
     void getImage_PrivateImageWithoutAccess_ThrowsForbidden() {
         UUID uuid = UUID.randomUUID();
-        User owner = new User().setId(1L);
-        User requester = new User().setId(2L);
-        Image image = new Image()
-                .setId(uuid)
-                .setOwner(owner)
-                .setProtection(Protection.PRIVATE);
+        User owner = User.builder()
+                .id(1L)
+                .active(true)
+                .build();
+        User requester = User.builder()
+                .id(2L)
+                .active(true)
+                .build();
+        Image image = Image.builder()
+                .id(uuid)
+                .owner(owner)
+                .protection(Protection.PRIVATE)
+                .build();
 
         when(imageRepository.findById(uuid)).thenReturn(image);
         try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
@@ -91,8 +98,11 @@ class ImageServiceTest {
     void updateImage_ChangeToPrivate_UpdatesProtection() {
         UUID uuid = UUID.randomUUID();
         UpdateImageRequest request = new UpdateImageRequest().protection(UpdateImageRequest.ProtectionEnum.PRIVATE);
-        User owner = new User().setId(1L);
-        Image image = new Image().setId(uuid).setOwner(owner);
+        User owner = User.builder()
+                .id(1L)
+                .active(true)
+                .build();
+        Image image = Image.builder().id(uuid).owner(owner).build();
 
         when(imageRepository.findById(uuid)).thenReturn(image);
         try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
@@ -106,8 +116,15 @@ class ImageServiceTest {
     @Test
     void deleteById_AdminUser_DeletesSuccessfully() {
         UUID uuid = UUID.randomUUID();
-        User admin = new User().setId(1L).setAdmin(true);
-        Image image = new Image().setId(uuid).setOwner(new User().setId(2L));
+        User admin = User.builder()
+                .id(1L)
+                .admin(true)
+                .active(true)
+                .build();
+        Image image = Image.builder()
+                .id(uuid)
+                .owner(User.builder().id(2L).active(true).build())
+                .build();
 
         when(imageRepository.findById(uuid)).thenReturn(image);
         try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
@@ -115,7 +132,7 @@ class ImageServiceTest {
 
             assertDoesNotThrow(() -> imageService.deleteById(uuid));
             verify(imageRepository).deleteById(uuid);
-            verify(minioService).deleteFile(uuid);
+            verify(minioService).deleteImage(uuid);
         }
     }
 }

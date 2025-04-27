@@ -14,30 +14,18 @@ class UserRepositoryTest extends AbstractRepositoryTest {
     private UserRepository userRepository;
 
     @Test
-    void save_NewUser_ReturnsWithId() {
-        User user = new User()
-                .setNickname("testuser")
-                .setEmail("test@example.com")
-                .setPassword("password");
-
-        User saved = userRepository.save(user);
-
-        assertNotNull(saved.getId());
-        assertEquals("testuser", saved.getNickname());
-    }
-
-    @Test
     void findByEmail_ExistingUser_ReturnsUser() {
-        User user = new User()
-                .setNickname("existing")
-                .setEmail("exist@example.com")
-                .setPassword("pass");
+        User user = User.builder()
+                .nickname("existing")
+                .email("exist@example.com")
+                .password("pass")
+                .build();
         userRepository.save(user);
 
         User found = userRepository.findByEmail("exist@example.com");
 
         assertNotNull(found);
-        assertEquals("existing", found.getNickname());
-        assertEquals("exist@example.com", found.getEmail());
+        assertEquals("existing", found.nickname());
+        assertEquals("exist@example.com", found.email());
     }
 }

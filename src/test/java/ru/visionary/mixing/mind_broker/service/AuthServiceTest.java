@@ -26,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
@@ -54,12 +53,8 @@ class AuthServiceTest {
                 .password("password");
 
         doReturn(null).when(userRepository).findByEmailOrNickname(any(), any());
-        doReturn(new User()).when(authMapper).requestToUser(any());
-        doAnswer(inv -> {
-            User u = inv.getArgument(0);
-            u.setId(1L);
-            return u;
-        }).when(userRepository).save(any());
+        doReturn(User.builder().build()).when(authMapper).requestToUser(any());
+        doReturn(1L).when(userRepository).save(any());
 
         assertDoesNotThrow(() -> authService.register(request));
         verify(userRepository).save(any());
@@ -72,8 +67,9 @@ class AuthServiceTest {
                 .email("existing@example.com")
                 .password("password");
 
-        User existing = new User()
-                .setEmail("existing@example.com");
+        User existing = User.builder()
+                .email("existing@example.com")
+                .build();
 
         doReturn(existing).when(userRepository).findByEmailOrNickname(any(), any());
 
@@ -88,9 +84,10 @@ class AuthServiceTest {
                 .email("new@example.com")
                 .password("password");
 
-        User existing = new User()
-                .setNickname("existing")
-                .setEmail("old@example.com");
+        User existing = User.builder()
+                .nickname("existing")
+                .email("old@example.com")
+                .build();
 
         doReturn(existing).when(userRepository).findByEmailOrNickname(any(), any());
 
@@ -103,10 +100,12 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest()
                 .email("valid@example.com")
                 .password("password");
-        User user = new User()
-                .setId(1L)
-                .setEmail("valid@example.com")
-                .setPassword("encoded");
+        User user = User.builder()
+                .id(1L)
+                .email("valid@example.com")
+                .password("encoded")
+                .active(true)
+                .build();
         String accessToken = "access";
         String refreshToken = "refresh";
 
@@ -128,9 +127,10 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest()
                 .email("valid@example.com")
                 .password("wrong");
-        User user = new User()
-                .setEmail("valid@example.com")
-                .setPassword("encoded");
+        User user = User.builder()
+                .email("valid@example.com")
+                .password("encoded")
+                .build();
 
         doReturn(user).when(userRepository).findByEmail(any());
         doReturn(false).when(passwordEncoder).matches(any(), any());
@@ -145,9 +145,11 @@ class AuthServiceTest {
                 .email("user@example.com")
                 .password("pass");
 
-        User user = new User();
-        user.setId(1L);
-        user.setPassword("encoded");
+        User user = User.builder()
+                .id(1L)
+                .password("encoded")
+                .active(true)
+                .build();
 
         doReturn(user).when(userRepository).findByEmail(any());
         doReturn(true).when(passwordEncoder).matches(any(), any());
@@ -161,12 +163,15 @@ class AuthServiceTest {
     void refresh_ValidToken_ReturnsNewTokens() {
         RefreshRequest request = new RefreshRequest().refreshToken("valid-refresh");
 
-        User user = new User();
-        user.setId(1L);
+        User user = User.builder()
+                .id(1L)
+                .active(true)
+                .build();
 
-        RefreshToken storedToken = new RefreshToken();
-        storedToken.setUser(user);
-        storedToken.setExpiryDate(LocalDateTime.now().plusDays(1));
+        RefreshToken storedToken = RefreshToken.builder()
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .build();
 
         String accessToken = "new-access";
         String refreshToken = "new-refresh";
@@ -197,8 +202,10 @@ class AuthServiceTest {
     void refresh_ExpiredToken_ThrowsException() {
         RefreshRequest request = new RefreshRequest().refreshToken("expired");
 
-        RefreshToken storedToken = new RefreshToken();
-        storedToken.setExpiryDate(LocalDateTime.now().minusDays(1));
+        RefreshToken storedToken = RefreshToken.builder()
+                .user(User.builder().active(true).build())
+                .expiryDate(LocalDateTime.now().minusDays(1))
+                .build();
 
         doReturn(true).when(jwtTokenProvider).validateToken(any());
         doReturn(storedToken).when(refreshTokenRepository).findByToken(any());

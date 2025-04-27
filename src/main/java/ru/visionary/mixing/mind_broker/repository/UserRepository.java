@@ -1,12 +1,15 @@
 package ru.visionary.mixing.mind_broker.repository;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.repository.mapper.UserRowMapper;
+
+import java.util.UUID;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,6 +21,12 @@ public class UserRepository {
             INSERT INTO users (nickname, email, password)
             VALUES (:nickname, :email, :password)
             RETURNING id
+            """;
+
+    private static final String FIND_BY_ID = """
+            SELECT *
+            FROM users
+            WHERE id = :id
             """;
 
     private static final String FIND_BY_EMAIL = """
@@ -32,16 +41,48 @@ public class UserRepository {
             FROM users
             WHERE email = :email
                 OR nickname = :nickname
+            LIMIT 1
             """;
 
-    public User save(User user) {
+    private static final String UPDATE_USER = """
+            UPDATE users
+            SET nickname = COALESCE(:nickname, nickname),
+                description = COALESCE(:description, description),
+                password = COALESCE(:password, password),
+                avatar = COALESCE(:avatar, avatar)
+            WHERE id = :id
+            """;
+
+    private static final String DELETE_USER = """
+            UPDATE users
+            SET active = false
+            WHERE id = :id
+            """;
+
+    private static final String DELETE_AVATAR = """
+            UPDATE users
+            SET avatar = null
+            WHERE id = :id
+            """;
+
+    public Long save(User user) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nickname", user.getNickname().toLowerCase())
-                .addValue("email", user.getEmail().toLowerCase())
+                .addValue("nickname", user.nickname().toLowerCase())
+                .addValue("email", user.email().toLowerCase())
                 .addValue("password", user.getPassword());
 
-        Long id = jdbcTemplate.queryForObject(INSERT_USER, params, Long.class);
-        return user.setId(id);
+        return jdbcTemplate.queryForObject(INSERT_USER, params, Long.class);
+    }
+
+    public User findById(long id) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", id);
+
+        try {
+            return jdbcTemplate.queryForObject(FIND_BY_ID, params, userRowMapper);
+        } catch (EmptyResultDataAccessException e) {
+            return null;
+        }
     }
 
     public User findByEmail(String email) {
@@ -65,5 +106,30 @@ public class UserRepository {
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    public void updateUser(long userId, String nickname, String description, String password, UUID avatar) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", userId)
+                .addValue("nickname", StringUtils.toRootLowerCase(nickname))
+                .addValue("description", description)
+                .addValue("password", password)
+                .addValue("avatar", avatar);
+
+        jdbcTemplate.update(UPDATE_USER, params);
+    }
+
+    public void deleteUser(long userId) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", userId);
+
+        jdbcTemplate.update(DELETE_USER, params);
+    }
+
+    public void deleteAvatar(long userId) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", userId);
+
+        jdbcTemplate.update(DELETE_AVATAR, params);
     }
 }

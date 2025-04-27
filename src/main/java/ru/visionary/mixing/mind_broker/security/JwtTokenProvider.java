@@ -28,8 +28,8 @@ public class JwtTokenProvider {
 
     public String generateAccessToken(User user) {
         return Jwts.builder()
-                .subject(user.getEmail())
-                .claim("roles", user.getAdmin() ? "ROLE_ADMIN" : "ROLE_USER")
+                .subject(user.email())
+                .claim("roles", user.admin() ? "ROLE_ADMIN" : "ROLE_USER")
                 .issuedAt(new Date())
                 .expiration(parseExpiration(jwtProperties.getAccessTokenExpiration()))
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -38,7 +38,7 @@ public class JwtTokenProvider {
 
     public String generateRefreshToken(User user) {
         return Jwts.builder()
-                .subject(user.getEmail())
+                .subject(user.email())
                 .issuedAt(new Date())
                 .expiration(parseExpiration(jwtProperties.getRefreshTokenExpiration()))
                 .signWith(secretKey, Jwts.SIG.HS256)

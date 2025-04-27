@@ -5,14 +5,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import ru.visionary.mixing.mind_broker.entity.RefreshToken;
-import ru.visionary.mixing.mind_broker.entity.User;
-import ru.visionary.mixing.mind_broker.exception.ErrorCode;
-import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.generated.model.AuthResponse;
 import ru.visionary.mixing.generated.model.LoginRequest;
 import ru.visionary.mixing.generated.model.RefreshRequest;
 import ru.visionary.mixing.generated.model.RegisterRequest;
+import ru.visionary.mixing.mind_broker.entity.RefreshToken;
+import ru.visionary.mixing.mind_broker.entity.User;
+import ru.visionary.mixing.mind_broker.exception.ErrorCode;
+import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.security.JwtTokenProvider;
@@ -31,14 +31,14 @@ public class AuthService {
     private final AuthMapper authMapper;
 
     public void register(RegisterRequest request) {
-        log.info("Registration attempt for email: {}", request.getEmail());
+        log.info("Registering user: email={}", request.getEmail());
 
         log.debug("Checking existing user for email: {} or nickname: {}", request.getEmail(), request.getNickname());
         User user = userRepository.findByEmailOrNickname(request.getEmail(), request.getNickname());
 
         if (user != null) {
-            if (user.getEmail().equals(request.getEmail())) {
-                log.warn("Registration conflict - email {} already exists", request.getEmail());
+            if (user.email().equals(request.getEmail())) {
+                log.warn("Registration conflict - email already exists: {}", request.getEmail());
                 throw new ServiceException(ErrorCode.EMAIL_ALREADY_IN_USE);
             }
             log.warn("Registration conflict - nickname {} already exists", request.getNickname());
@@ -69,11 +69,16 @@ public class AuthService {
             throw new ServiceException(ErrorCode.INVALID_CREDENTIALS);
         }
 
-        log.info("Generating tokens for user: {}", user.getEmail());
+        if (!user.active()) {
+            log.warn("Login failed - user is inactive: {}", request.getEmail());
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        log.info("Generating tokens for user: {}", user.email());
         String accessToken = jwtTokenProvider.generateAccessToken(user);
         String refreshToken = jwtTokenProvider.generateRefreshToken(user);
 
-        refreshTokenRepository.deleteByUser(user.getId());
+        refreshTokenRepository.deleteByUser(user.id());
         refreshTokenRepository.save(new RefreshToken(
                 null, refreshToken, user,
                 LocalDateTime.now().plusDays(30))
@@ -96,15 +101,19 @@ public class AuthService {
             throw new ServiceException(ErrorCode.INVALID_REFRESH_TOKEN);
         }
 
-        if (storedToken.getExpiryDate().isBefore(LocalDateTime.now())) {
+        if (!storedToken.user().active()) {
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        if (storedToken.expiryDate().isBefore(LocalDateTime.now())) {
             throw new ServiceException(ErrorCode.EXPIRED_REFRESH_TOKEN);
         }
 
-        String newAccessToken = jwtTokenProvider.generateAccessToken(storedToken.getUser());
-        String newRefreshToken = jwtTokenProvider.generateRefreshToken(storedToken.getUser());
+        String newAccessToken = jwtTokenProvider.generateAccessToken(storedToken.user());
+        String newRefreshToken = jwtTokenProvider.generateRefreshToken(storedToken.user());
 
-        refreshTokenRepository.deleteByUser(storedToken.getUser().getId());
-        refreshTokenRepository.save(new RefreshToken(null, newRefreshToken, storedToken.getUser(),
+        refreshTokenRepository.deleteByUser(storedToken.user().id());
+        refreshTokenRepository.save(new RefreshToken(null, newRefreshToken, storedToken.user(),
                 LocalDateTime.now().plusDays(30)));
 
         return new AuthResponse(newAccessToken, newRefreshToken);

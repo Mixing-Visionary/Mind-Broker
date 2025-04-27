@@ -1,0 +1,43 @@
+package ru.visionary.mixing.mind_broker.utils;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FilenameUtils;
+import org.springframework.web.multipart.MultipartFile;
+import ru.visionary.mixing.mind_broker.exception.ErrorCode;
+import ru.visionary.mixing.mind_broker.exception.ServiceException;
+
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.util.Set;
+
+@Slf4j
+public class ImageUtils {
+    private static final Set<String> allowedContentType = Set.of("image/jpeg", "image/jpg");
+    private static final Set<String> allowedExtension = Set.of("jpeg", "jpg");
+
+    public static void checkImage(MultipartFile image) {
+        if (image.isEmpty()) {
+            log.error("Uploading error: empty file");
+            throw new ServiceException(ErrorCode.EMPTY_FILE);
+        }
+
+        if (!allowedContentType.contains(image.getContentType())
+                || !allowedExtension.contains(FilenameUtils.getExtension(image.getOriginalFilename()))) {
+            log.error("Uploading error: not supported file format");
+            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
+        }
+
+        BufferedImage img;
+        try {
+            img = ImageIO.read(image.getInputStream());
+        } catch (Exception e) {
+            log.error("Uploading error: not supported file format");
+            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
+        }
+
+        if (img == null) {
+            log.error("Uploading error: not supported file format");
+            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
+        }
+    }
+}

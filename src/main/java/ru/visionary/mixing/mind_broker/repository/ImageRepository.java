@@ -24,7 +24,7 @@ public class ImageRepository {
             """;
 
     private static final String FIND_BY_ID = """
-            SELECT i.*, u.nickname
+            SELECT i.*, u.nickname, u.avatar, u.active
             FROM image i
             JOIN users u ON i.owner = u.id
             WHERE i.id = :id
@@ -45,9 +45,9 @@ public class ImageRepository {
         UUID uuid = UUID.randomUUID();
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", uuid)
-                .addValue("owner", image.getOwner().getId())
-                .addValue("protection", image.getProtection().toString().toLowerCase())
-                .addValue("createdAt", Timestamp.valueOf(image.getCreatedAt()));
+                .addValue("owner", image.owner().id())
+                .addValue("protection", image.protection().toString().toLowerCase())
+                .addValue("createdAt", Timestamp.valueOf(image.createdAt()));
 
         jdbcTemplate.update(INSERT_IMAGE, params);
         return uuid;

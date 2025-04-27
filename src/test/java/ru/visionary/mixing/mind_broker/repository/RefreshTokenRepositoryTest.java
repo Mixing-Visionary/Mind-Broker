@@ -9,7 +9,6 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 @SpringBootTest
@@ -21,44 +20,46 @@ class RefreshTokenRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void saveAndFindByToken_ShouldWork() {
-        User user = userRepository.save(createTestUser());
+        Long userId = userRepository.save(createTestUser());
 
-        RefreshToken token = new RefreshToken()
-                .setToken("test-token")
-                .setUser(user)
-                .setExpiryDate(LocalDateTime.now().plusDays(1));
+        RefreshToken token = RefreshToken.builder()
+                .token("test-token")
+                .user(User.builder().id(userId).build())
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .build();
 
-        RefreshToken saved = refreshTokenRepository.save(token);
+        refreshTokenRepository.save(token);
         RefreshToken found = refreshTokenRepository.findByToken("test-token");
 
-        assertNotNull(saved.getId());
-        assertEquals("test-token", found.getToken());
-        assertEquals(user.getId(), found.getUser().getId());
+        assertEquals("test-token", found.token());
+        assertEquals(userId, found.user().id());
     }
 
     @Test
     void deleteByUser_ExistingTokens_RemovesAllTokens() {
-        User user = userRepository.save(createTestUser());
-        refreshTokenRepository.save(createTestToken(user, "token1"));
-        refreshTokenRepository.save(createTestToken(user, "token2"));
+        Long userId = userRepository.save(createTestUser());
+        refreshTokenRepository.save(createTestToken(userId, "token1"));
+        refreshTokenRepository.save(createTestToken(userId, "token2"));
 
-        refreshTokenRepository.deleteByUser(user.getId());
+        refreshTokenRepository.deleteByUser(userId);
 
         assertNull(refreshTokenRepository.findByToken("token1"));
         assertNull(refreshTokenRepository.findByToken("token2"));
     }
 
     private User createTestUser() {
-        return new User()
-                .setNickname("tokenuser")
-                .setEmail("token@example.com")
-                .setPassword("pass");
+        return User.builder()
+                .nickname("tokenuser")
+                .email("token@example.com")
+                .password("pass")
+                .build();
     }
 
-    private RefreshToken createTestToken(User user, String token) {
-        return new RefreshToken()
-                .setToken(token)
-                .setUser(user)
-                .setExpiryDate(LocalDateTime.now().plusDays(1));
+    private RefreshToken createTestToken(Long userId, String token) {
+        return RefreshToken.builder()
+                .token(token)
+                .user(User.builder().id(userId).build())
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .build();
     }
 }
