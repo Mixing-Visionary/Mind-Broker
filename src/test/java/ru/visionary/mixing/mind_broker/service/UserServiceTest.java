@@ -43,6 +43,17 @@ class UserServiceTest {
     private UserService userService;
 
     @Test
+    void getUser_InactiveUser_ThrowsException() {
+        User inactiveUser = User.builder().id(1L).active(false).build();
+        when(userRepository.findById(1L)).thenReturn(inactiveUser);
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> userService.getUser(1L));
+
+        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+    }
+
+    @Test
     void updateUser_AdminUpdatesOtherUser_Success() {
         User admin = User.builder()
                 .id(1L)

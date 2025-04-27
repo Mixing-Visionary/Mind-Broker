@@ -6,11 +6,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
+import ru.visionary.mixing.mind_broker.service.mapper.UserMapper;
 import ru.visionary.mixing.mind_broker.utils.ImageUtils;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
@@ -24,6 +26,25 @@ public class UserService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final MinioService minioService;
     private final PasswordEncoder passwordEncoder;
+    private final UserMapper userMapper;
+
+    public UserResponse getUser(long userId) {
+        log.info("Fetching user info for id: {}", userId);
+
+        User user = userRepository.findById(userId);
+
+        if (user == null) {
+            log.error("Fetching error: user not found");
+            throw new ServiceException(ErrorCode.USER_NOT_FOUND);
+        }
+        if (!user.active()) {
+            log.error("Fetching error: user deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        log.info("Successfully retrieved user: {}", userId);
+        return userMapper.toResponse(user);
+    }
 
     @Transactional
     public void updateUser(long userId, String nickname, String description, String password, MultipartFile avatar) {

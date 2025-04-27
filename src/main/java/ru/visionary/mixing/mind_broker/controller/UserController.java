@@ -5,12 +5,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import ru.visionary.mixing.generated.api.UserApi;
+import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.service.UserService;
 
 @RestController
 @RequiredArgsConstructor
 public class UserController implements UserApi {
     private final UserService userService;
+
+    @Override
+    public ResponseEntity<UserResponse> getUser(Long userId) {
+        return ResponseEntity.ok(userService.getUser(userId));
+    }
 
     @Override
     public ResponseEntity<Void> updateUser(Long userId, String nickname, String description, String password, MultipartFile avatar) {

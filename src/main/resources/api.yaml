@@ -315,6 +315,46 @@ paths:
       security:
         - jwt-token: []
   /api/v1/user/{userId}:
+    get:
+      tags:
+        - user
+      summary: Получить данные пользователя
+      operationId: getUser
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, данные которого нужно получить
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
     put:
       tags:
         - user
@@ -629,6 +669,41 @@ components:
             - private
       required:
         - protection
+    UserResponse:
+      type: object
+      properties:
+        userId:
+          type: integer
+          format: int64
+          description: id пользователя
+          example: 1
+          minimum: 1
+        nickname:
+          type: string
+          minLength: 4
+          maxLength: 25
+          pattern: ^\S(.*\S)?$
+          description: Никнейм пользователя
+          example: "admin"
+        email:
+          type: string
+          format: email
+          description: Почта пользователя
+          example: "my_mail@email.com"
+        description:
+          type: string
+          maxLength: 255
+          description: Описание пользователя
+          example: "Так то у меня свой бизнес, а это для души"
+        avatarUuid:
+          type: string
+          format: uuid
+          description: uuid аватарки пользователя
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      required:
+        - userId
+        - nickname
+        - email
     UpdateUserRequest:
       type: object
       properties:
@@ -642,6 +717,7 @@ components:
           example: "admin"
         description:
           type: string
+          maxLength: 255
           description: Новое описание пользователя. null - оставить без изменений, '' - очистить
           example: "Так то у меня свой бизнес, а это для души"
         password:
