@@ -2,7 +2,6 @@ package ru.visionary.mixing.mind_broker.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,12 +16,10 @@ import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ImageRepository;
 import ru.visionary.mixing.mind_broker.service.mapper.ImageMapper;
+import ru.visionary.mixing.mind_broker.utils.ImageUtils;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
 import java.time.LocalDateTime;
-import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -32,9 +29,6 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final MinioService minioService;
     private final ImageMapper imageMapper;
-
-    private static final Set<String> allowedContentType = Set.of("image/jpeg", "image/jpg");
-    private static final Set<String> allowedExtension = Set.of("jpeg", "jpg");
 
     @Transactional
     public SaveImageResponse saveImage(MultipartFile image, String protection) {
@@ -48,46 +42,29 @@ public class ImageService {
             throw new ServiceException(ErrorCode.INVALID_REQUEST);
         }
 
-        if (image.isEmpty()) {
-            log.error("Uploading error: empty file");
-            throw new ServiceException(ErrorCode.EMPTY_FILE);
-        }
-
-        if (!allowedContentType.contains(image.getContentType())
-                || !allowedExtension.contains(FilenameUtils.getExtension(image.getOriginalFilename()))) {
-            log.error("Uploading error: not supported file format");
-            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
-        }
-
-        BufferedImage img;
-        try {
-            img = ImageIO.read(image.getInputStream());
-        } catch (Exception e) {
-            log.error("Uploading error: not supported file format");
-            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
-        }
-
-        if (img == null) {
-            log.error("Uploading error: not supported file format");
-            throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
-        }
+        ImageUtils.checkImage(image);
 
         User user = SecurityContextUtils.getAuthenticatedUser();
         if (user == null) {
             log.error("Uploading error: user not authorized");
             throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
         }
+        if (!user.active()) {
+            log.error("Uploading error: user is inactive");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
 
-        log.debug("Processing image metadata. User: {}", user.getEmail());
+        log.debug("Processing image metadata. User: {}", user.email());
 
         LocalDateTime now = LocalDateTime.now();
-        UUID uuid = imageRepository.save(new Image()
-                .setOwner(user)
-                .setProtection(imageProtection)
-                .setCreatedAt(now));
+        UUID uuid = imageRepository.save(Image.builder()
+                .owner(user)
+                .protection(imageProtection)
+                .createdAt(now)
+                .build());
 
         log.debug("Uploading to MinIO. UUID: {}", uuid);
-        minioService.uploadFile(image, uuid);
+        minioService.uploadImage(image, uuid);
 
         log.info("Image successfully saved. UUID: {}, Protection: {}", uuid, imageProtection);
 
@@ -105,9 +82,19 @@ public class ImageService {
             throw new ServiceException(ErrorCode.IMAGE_NOT_FOUND);
         }
 
-        if (Protection.PRIVATE.equals(image.getProtection()) &&
-                (user == null || !(user.getId().equals(image.getOwner().getId()) || BooleanUtils.isTrue(user.getAdmin())))) {
-            log.error("Fetching error: use doesn't have access");
+        if (!image.owner().active()) {
+            log.error("Fetching error: owner is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+        if (user != null && !user.active()) {
+            log.error("Fetching error: user is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        if (Protection.PRIVATE.equals(image.protection()) &&
+                (user == null ||
+                        !(user.id().equals(image.owner().id()) || BooleanUtils.isTrue(user.admin())))) {
+            log.error("Fetching error: user doesn't have access");
             throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
         }
 
@@ -120,13 +107,23 @@ public class ImageService {
         User user = SecurityContextUtils.getAuthenticatedUser();
         Image image = imageRepository.findById(uuid);
 
-        if (image.getId() == null) {
+        if (image == null) {
             log.error("Updating error: image not found");
             throw new ServiceException(ErrorCode.IMAGE_NOT_FOUND);
         }
 
-        if (user == null || !(user.getId().equals(image.getOwner().getId()) || BooleanUtils.isTrue(user.getAdmin()))) {
-            log.error("Fetching error: use doesn't have access");
+        if (!image.owner().active()) {
+            log.error("Updating error: owner is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+        if (user != null && !user.active()) {
+            log.error("Updating error: user is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        if (user == null ||
+                !(user.id().equals(image.owner().id()) || BooleanUtils.isTrue(user.admin()))) {
+            log.error("Updating error: user doesn't have access");
             throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
         }
 
@@ -142,20 +139,30 @@ public class ImageService {
         User user = SecurityContextUtils.getAuthenticatedUser();
         Image image = imageRepository.findById(uuid);
 
-        if (image.getId() == null) {
-            log.error("Updating error: image not found");
+        if (image == null) {
+            log.error("Deleting error: image not found");
             throw new ServiceException(ErrorCode.IMAGE_NOT_FOUND);
         }
 
-        if (user == null || !(user.getId().equals(image.getOwner().getId()) || BooleanUtils.isTrue(user.getAdmin()))) {
-            log.error("Fetching error: use doesn't have access");
+        if (!image.owner().active()) {
+            log.error("Deleting error: owner is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+        if (user != null && !user.active()) {
+            log.error("Deleting error: user is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        if (user == null
+                || !(user.id().equals(image.owner().id()) || BooleanUtils.isTrue(user.admin()))) {
+            log.error("Deleting error: user doesn't have access");
             throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
         }
 
         log.info("Deleting image {}", uuid);
 
         imageRepository.deleteById(uuid);
-        minioService.deleteFile(uuid);
+        minioService.deleteImage(uuid);
 
         log.info("Image deleted successfully");
     }

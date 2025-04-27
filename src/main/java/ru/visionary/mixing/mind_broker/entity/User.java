@@ -1,32 +1,35 @@
 package ru.visionary.mixing.mind_broker.entity;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
 @Builder
-public class User implements UserDetails {
-    private Long id;
-    private String nickname;
-    private String email;
-    private String password;
-    private Boolean admin;
-
+public record User (
+    Long id,
+    String nickname,
+    String email,
+    String password,
+    UUID avatar,
+    String description,
+    LocalDateTime createdAt,
+    Boolean admin,
+    Boolean active
+) implements UserDetails {
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of(new SimpleGrantedAuthority(admin ? "ROLE_ADMIN" : "ROLE_USER"));
+    }
+
+    @Override
+    public String getPassword() {
+        return password();
     }
 
     @Override
@@ -51,6 +54,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return active();
     }
 }

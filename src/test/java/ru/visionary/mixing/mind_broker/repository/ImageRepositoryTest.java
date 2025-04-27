@@ -27,11 +27,8 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void save_ValidImage_ShouldPersistInDatabase() {
-        User user = userRepository.save(createTestUser());
-        Image image = new Image()
-                .setOwner(user)
-                .setProtection(Protection.PUBLIC)
-                .setCreatedAt(LocalDateTime.now());
+        Long userId = userRepository.save(createTestUser());
+        Image image = createTestImage(userId);
 
         UUID imageId = imageRepository.save(image);
 
@@ -41,11 +38,12 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void save_ImageWithNonExistingUser_ShouldThrowException() {
-        User nonExistingUser = new User().setId(999L);
-        Image image = new Image()
-                .setOwner(nonExistingUser)
-                .setProtection(Protection.PRIVATE)
-                .setCreatedAt(LocalDateTime.now());
+        User nonExistingUser = User.builder().id(999L).build();
+        Image image = Image.builder()
+                .owner(nonExistingUser)
+                .protection(Protection.PRIVATE)
+                .createdAt(LocalDateTime.now())
+                .build();
 
         assertThrows(DataIntegrityViolationException.class,
                 () -> imageRepository.save(image));
@@ -53,12 +51,13 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void save_ImageWithAllFields_ShouldStoreCorrectValues() {
-        User user = userRepository.save(createTestUser());
+        Long userId = userRepository.save(createTestUser());
         LocalDateTime createdAt = LocalDateTime.now().withNano(0);
-        Image image = new Image()
-                .setOwner(user)
-                .setProtection(Protection.PRIVATE)
-                .setCreatedAt(createdAt);
+        Image image = Image.builder()
+                .owner(User.builder().id(userId).build())
+                .protection(Protection.PRIVATE)
+                .createdAt(createdAt)
+                .build();
 
         UUID imageId = imageRepository.save(image);
 
@@ -67,9 +66,9 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void save_MultipleImages_ShouldGenerateUniqueIds() {
-        User user = userRepository.save(createTestUser());
-        Image image1 = createTestImage(user);
-        Image image2 = createTestImage(user);
+        Long userId = userRepository.save(createTestUser());
+        Image image1 = createTestImage(userId);
+        Image image2 = createTestImage(userId);
 
         UUID id1 = imageRepository.save(image1);
         UUID id2 = imageRepository.save(image2);
@@ -79,29 +78,29 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
 
     @Test
     void findById_ExistingImage_ReturnsImage() {
-        User user = userRepository.save(createTestUser());
-        UUID imageId = imageRepository.save(createTestImage(user));
+        Long userId = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(userId));
 
         Image found = imageRepository.findById(imageId);
         assertNotNull(found);
-        assertEquals(imageId, found.getId());
+        assertEquals(imageId, found.id());
     }
 
     @Test
     void updateProtection_ValidRequest_UpdatesDatabase() {
-        User user = userRepository.save(createTestUser());
-        UUID imageId = imageRepository.save(createTestImage(user));
+        Long userId = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(userId));
 
         imageRepository.updateProtection(imageId, Protection.PRIVATE);
 
         Image updated = imageRepository.findById(imageId);
-        assertEquals(Protection.PRIVATE, updated.getProtection());
+        assertEquals(Protection.PRIVATE, updated.protection());
     }
 
     @Test
     void deleteById_ExistingImage_RemovesFromDatabase() {
-        User user = userRepository.save(createTestUser());
-        UUID imageId = imageRepository.save(createTestImage(user));
+        Long userId = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(userId));
 
         imageRepository.deleteById(imageId);
 
@@ -109,16 +108,18 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
     }
 
     private User createTestUser() {
-        return new User()
-                .setNickname("testuser")
-                .setEmail("test@example.com")
-                .setPassword("password");
+        return User.builder()
+                .nickname("testuser")
+                .email("test@example.com")
+                .password("password")
+                .build();
     }
 
-    private Image createTestImage(User user) {
-        return new Image()
-                .setOwner(user)
-                .setProtection(Protection.PUBLIC)
-                .setCreatedAt(LocalDateTime.now());
+    private Image createTestImage(Long userId) {
+        return Image.builder()
+                .owner(User.builder().id(userId).build())
+                .protection(Protection.PUBLIC)
+                .createdAt(LocalDateTime.now())
+                .build();
     }
 }

@@ -20,13 +20,13 @@ import ru.visionary.mixing.generated.model.ErrorResponse;
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Object> handleDataAccessException(DataAccessException ex) {
-        log.error("Database error occurred: {}", ex.getMessage());
+        log.error("Database error: {}", ex.getMessage(), ex);
         return createResponse(ErrorCode.DATABASE_EXCEPTION);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<Object> handleConstraintViolationException(ConstraintViolationException ex) {
-        log.error("Database error occurred: {}", ex.getMessage());
+        log.warn("Validation error: {}", ex.getMessage(), ex);
         return createResponse(ErrorCode.INVALID_REQUEST);
     }
 
@@ -47,7 +47,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
     @ExceptionHandler(ServiceException.class)
     public ResponseEntity<Object> handleServiceException(ServiceException se) {
-        log.warn("Service exception: {} - {}", se.getErrorCode().name(), se.getErrorCode().getMessage());
+        log.warn("ServiceException: code={}, message='{}'", se.getErrorCode().getErrorCode(), se.getErrorCode().getMessage(), se);
         return createResponse(se.getErrorCode());
     }
 

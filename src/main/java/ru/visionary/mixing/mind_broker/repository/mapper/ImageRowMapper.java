@@ -14,13 +14,17 @@ import java.util.UUID;
 public class ImageRowMapper implements RowMapper<Image> {
     @Override
     public Image mapRow(ResultSet rs, int rowNum) throws SQLException {
-        return new Image()
-                .setId(rs.getObject("id", UUID.class))
-                .setProtection(Protection.valueOf(rs.getString("protection").toUpperCase()))
-                .setCreatedAt(rs.getTimestamp("created_at").toLocalDateTime())
-                .setOwner(new User()
-                        .setId(rs.getLong("owner"))
-                        .setNickname(rs.getString("nickname"))
-                );
+        return Image.builder()
+                .id(rs.getObject("id", UUID.class))
+                .protection(Protection.valueOf(rs.getString("protection").toUpperCase()))
+                .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
+                .owner(User.builder()
+                        .id(rs.getLong("owner"))
+                        .nickname(rs.getString("nickname"))
+                        .avatar(rs.getObject("avatar", UUID.class))
+                        .active(rs.getBoolean("active"))
+                        .build()
+                )
+                .build();
     }
 }

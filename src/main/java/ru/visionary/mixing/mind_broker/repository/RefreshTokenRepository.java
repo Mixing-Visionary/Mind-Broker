@@ -17,7 +17,6 @@ public class RefreshTokenRepository {
     private static final String INSERT_TOKEN = """
         INSERT INTO refresh_token (token, user_id, expiry_date)
         VALUES (:token, :user, :expiryDate)
-        RETURNING id
         """;
 
     private static final String FIND_BY_TOKEN = """
@@ -32,14 +31,13 @@ public class RefreshTokenRepository {
         WHERE user_id = :user
         """;
 
-    public RefreshToken save(RefreshToken token) {
+    public void save(RefreshToken token) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("token", token.getToken())
-                .addValue("user", token.getUser().getId())
-                .addValue("expiryDate", token.getExpiryDate());
+                .addValue("token", token.token())
+                .addValue("user", token.user().id())
+                .addValue("expiryDate", token.expiryDate());
 
-        Long id = jdbcTemplate.queryForObject(INSERT_TOKEN, params, Long.class);
-        return token.setId(id);
+        jdbcTemplate.update(INSERT_TOKEN, params);
     }
 
     public RefreshToken findByToken(String token) {

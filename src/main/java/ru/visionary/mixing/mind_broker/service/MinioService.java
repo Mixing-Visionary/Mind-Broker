@@ -20,32 +20,48 @@ public class MinioService {
     private final MinioClient minioClient;
     private final MinioProperties properties;
 
-    public void uploadFile(MultipartFile file, UUID uuid) {
-        log.info("Uploading file {} to MinIO}", uuid);
+    public void uploadImage(MultipartFile image, UUID uuid) {
+        uploadFile(image, uuid, properties.getImagesBucket());
+    }
+
+    public void uploadAvatar(MultipartFile avatar, UUID uuid) {
+        uploadFile(avatar, uuid, properties.getAvatarsBucket());
+    }
+
+    private void uploadFile(MultipartFile file, UUID uuid, String bucket) {
+        log.info("Uploading file {} to MinIO bucket {}}", uuid, bucket);
         try {
             minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(properties.getBucketName())
+                    .bucket(bucket)
                     .object(uuid.toString())
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())
                     .build());
-            log.debug("Successfully uploaded file {}", uuid);
+            log.debug("Successfully uploaded file {} to bucket {}", uuid, bucket);
         } catch (Exception e) {
-            log.error("Failed to upload file {} to MinIO: {}", uuid, e.getMessage());
+            log.error("Failed to upload file {} to MinIO bucket {}: {}", uuid, bucket, e.getMessage());
             throw new ServiceException(ErrorCode.FAILED_UPLOAD_MINIO);
         }
     }
 
-    public void deleteFile(UUID uuid) {
-        log.debug("Starting MinIO deletion. UUID: {}", uuid);
+    public void deleteImage(UUID uuid) {
+        deleteFile(uuid, properties.getImagesBucket());
+    }
+
+    public void deleteAvatar(UUID uuid) {
+        deleteFile(uuid, properties.getAvatarsBucket());
+    }
+
+    private void deleteFile(UUID uuid, String bucket) {
+        log.debug("Deleting file {} from MinIO bucket {}", uuid, bucket);
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(properties.getBucketName())
+                    .bucket(bucket)
                     .object(uuid.toString())
                     .build());
-            log.info("MinIO deletion success. UUID: {}", uuid);
+            log.info("Successfully deleted file {} from bucket {}", uuid, bucket);
         } catch (Exception e) {
-            log.error("MinIO deletion failed. UUID: {}, Error: {}", uuid, e.getMessage());
+            log.error("Failed to delete file {} from MinIO bucket {}: {}", uuid, bucket, e.getMessage());
             throw new ServiceException(ErrorCode.FAILED_DELETE_MINIO);
         }
     }
