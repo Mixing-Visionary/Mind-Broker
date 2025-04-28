@@ -33,8 +33,9 @@ public class SecurityConfig {
     };
 
     private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
-            "/api/v1/image/**",
-            "/api/v1/user/**"
+            "/api/v1/image/*",
+            "/api/v1/user/*",
+            "/api/v1/user/*/images"
     };
 
     @Bean
@@ -42,6 +43,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/v1/user/images").authenticated()
                         .requestMatchers(WITHOUT_AUTHORIZATION_ALL_METHODS).permitAll()
                         .requestMatchers(HttpMethod.GET, WITHOUT_AUTHORIZATION_ONLY_GET).permitAll()
                         .anyRequest().authenticated()

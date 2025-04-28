@@ -10,9 +10,8 @@
         http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd
         http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd">
 
-    <include file="changelog/2025-04-16-SCRUM-98.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/2025-04-24-SCRUM-112.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/2025-04-26-SCRUM-111.xml" relativeToChangelogFile="true"/>
-    <include file="changelog/2025-04-28-SCRUM-113.xml" relativeToChangelogFile="true"/>
+    <changeSet id="SCRUM-113" author="d.khanin">
+        <sqlFile path="sql/SCRUM-113.sql" relativeToChangelogFile="true"/>
+    </changeSet>
 
 </databaseChangeLog>

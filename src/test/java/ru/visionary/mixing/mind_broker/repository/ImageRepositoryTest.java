@@ -9,6 +9,7 @@ import ru.visionary.mixing.mind_broker.entity.Protection;
 import ru.visionary.mixing.mind_broker.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -77,6 +78,36 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
+    void save_ShouldPersistImageWithAllFields() {
+        Long userId = userRepository.save(createTestUser());
+        Image image = Image.builder()
+                .owner(User.builder().id(userId).build())
+                .protection(Protection.PRIVATE)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        UUID imageId = imageRepository.save(image);
+
+        Image savedImage = imageRepository.findById(imageId);
+        assertNotNull(savedImage);
+        assertEquals(userId, savedImage.owner().id());
+        assertEquals(Protection.PRIVATE, savedImage.protection());
+        assertNotNull(savedImage.createdAt());
+    }
+
+    @Test
+    void save_ShouldThrowExceptionWhenOwnerNotExists() {
+        Image image = Image.builder()
+                .owner(User.builder().id(999L).build())
+                .protection(Protection.PUBLIC)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        assertThrows(DataIntegrityViolationException.class,
+                () -> imageRepository.save(image));
+    }
+
+    @Test
     void findById_ExistingImage_ReturnsImage() {
         Long userId = userRepository.save(createTestUser());
         UUID imageId = imageRepository.save(createTestImage(userId));
@@ -84,6 +115,32 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
         Image found = imageRepository.findById(imageId);
         assertNotNull(found);
         assertEquals(imageId, found.id());
+    }
+
+    @Test
+    void findByOwnerAndProtection_ReturnsPaginatedResults() {
+        Long userId = userRepository.save(createTestUser());
+        imageRepository.save(createTestImage(userId));
+        imageRepository.save(createTestImage(userId));
+
+        List<Image> result = imageRepository.findByOwnerAndProtection(userId, Protection.PUBLIC, 1, 0);
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void findByOwnerAndProtection_ShouldReturnPaginatedResults() {
+        Long userId = userRepository.save(createTestUser());
+        imageRepository.save(createTestImage(userId, Protection.PUBLIC));
+        imageRepository.save(createTestImage(userId, Protection.PUBLIC));
+        imageRepository.save(createTestImage(userId, Protection.PRIVATE));
+
+        List<Image> result = imageRepository.findByOwnerAndProtection(
+                userId, Protection.PUBLIC, 1, 0
+        );
+
+        assertEquals(1, result.size());
+        assertEquals(Protection.PUBLIC, result.get(0).protection());
     }
 
     @Test
@@ -98,7 +155,28 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
     }
 
     @Test
+    void updateProtection_ShouldModifyExistingRecord() {
+        Long userId = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(userId, Protection.PUBLIC));
+
+        imageRepository.updateProtection(imageId, Protection.PRIVATE);
+
+        Image updatedImage = imageRepository.findById(imageId);
+        assertEquals(Protection.PRIVATE, updatedImage.protection());
+    }
+
+    @Test
     void deleteById_ExistingImage_RemovesFromDatabase() {
+        Long userId = userRepository.save(createTestUser());
+        UUID imageId = imageRepository.save(createTestImage(userId));
+
+        imageRepository.deleteById(imageId);
+
+        assertNull(imageRepository.findById(imageId));
+    }
+
+    @Test
+    void deleteById_ShouldRemoveImageFromDatabase() {
         Long userId = userRepository.save(createTestUser());
         UUID imageId = imageRepository.save(createTestImage(userId));
 
@@ -119,6 +197,14 @@ class ImageRepositoryTest extends AbstractRepositoryTest {
         return Image.builder()
                 .owner(User.builder().id(userId).build())
                 .protection(Protection.PUBLIC)
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
+    private Image createTestImage(Long userId, Protection protection) {
+        return Image.builder()
+                .owner(User.builder().id(userId).build())
+                .protection(protection)
                 .createdAt(LocalDateTime.now())
                 .build();
     }

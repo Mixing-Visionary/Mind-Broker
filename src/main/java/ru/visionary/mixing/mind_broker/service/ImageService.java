@@ -6,6 +6,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import ru.visionary.mixing.generated.model.GetImagesResponse;
 import ru.visionary.mixing.generated.model.ImageResponse;
 import ru.visionary.mixing.generated.model.SaveImageResponse;
 import ru.visionary.mixing.generated.model.UpdateImageRequest;
@@ -15,11 +16,13 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ImageRepository;
+import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.service.mapper.ImageMapper;
 import ru.visionary.mixing.mind_broker.utils.ImageUtils;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,6 +30,7 @@ import java.util.UUID;
 @Slf4j
 public class ImageService {
     private final ImageRepository imageRepository;
+    private final UserRepository userRepository;
     private final MinioService minioService;
     private final ImageMapper imageMapper;
 
@@ -100,6 +104,55 @@ public class ImageService {
 
         log.info("Successfully retrieved image: {}", uuid);
         return imageMapper.toResponse(imageRepository.findById(uuid));
+    }
+
+    public GetImagesResponse getImagesForCurrentUser(int size, int page, String protection) {
+        log.info("Fetching images for current user: size={}, page={}, protection={}", size, page, protection);
+        User user = SecurityContextUtils.getAuthenticatedUser();
+
+        if (user == null) {
+            log.info("Fetching error: user not authorized");
+            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+        }
+        if (!user.active()) {
+            log.info("Fetching error: user is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        Protection imageProtection;
+        try {
+            imageProtection = Protection.valueOf(protection.toUpperCase());
+        } catch (Exception e) {
+            log.error("Uploading error: protection invalid");
+            throw new ServiceException(ErrorCode.INVALID_REQUEST);
+        }
+
+        List<Image> images = imageRepository.findByOwnerAndProtection(user.id(), imageProtection, size, page);
+
+        log.info("Found {} images for user: {}", images.size(), user.email());
+
+        return new GetImagesResponse(imageMapper.toResponse(images));
+    }
+
+    public GetImagesResponse getImagesByUserId(long userId, int size, int page) {
+        log.info("Fetching images for user {}: size={}, page={}", userId, size, page);
+
+        User user = userRepository.findById(userId);
+
+        if (user == null) {
+            log.info("Fetching error: user not authorized");
+            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+        }
+        if (!user.active()) {
+            log.info("Fetching error: user is deleted");
+            throw new ServiceException(ErrorCode.USER_DELETED);
+        }
+
+        List<Image> images = imageRepository.findByOwnerAndProtection(userId, Protection.PUBLIC, size, page);
+
+        log.info("Found {} public images for user {}", images.size(), userId);
+
+        return new GetImagesResponse(imageMapper.toResponse(images));
     }
 
     public void updateImage(UUID uuid, UpdateImageRequest request) {

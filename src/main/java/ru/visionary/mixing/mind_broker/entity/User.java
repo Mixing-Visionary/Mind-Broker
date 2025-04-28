@@ -19,7 +19,7 @@ public record User (
     UUID avatar,
     String description,
     LocalDateTime createdAt,
-    Boolean admin,
+    boolean admin,
     Boolean active
 ) implements UserDetails {
     @Override

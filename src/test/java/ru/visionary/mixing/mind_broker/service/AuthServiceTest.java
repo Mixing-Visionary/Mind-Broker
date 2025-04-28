@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -160,6 +161,36 @@ class AuthServiceTest {
     }
 
     @Test
+    void login_WhenUserIsInactive_ThrowsException() {
+        LoginRequest request = new LoginRequest()
+                .email("inactive@example.com")
+                .password("pass");
+        User user = User.builder().active(false).build();
+
+        when(userRepository.findByEmail(any())).thenReturn(user);
+        when(passwordEncoder.matches(any(), any())).thenReturn(true);
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> authService.login(request));
+
+        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+    }
+
+    @Test
+    void login_WhenUserNotFound_ThrowsException() {
+        LoginRequest request = new LoginRequest()
+                .email("nonexistent@example.com")
+                .password("pass");
+
+        when(userRepository.findByEmail(any())).thenReturn(null);
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> authService.login(request));
+
+        assertEquals(ErrorCode.INVALID_CREDENTIALS, ex.getErrorCode());
+    }
+
+    @Test
     void refresh_ValidToken_ReturnsNewTokens() {
         RefreshRequest request = new RefreshRequest().refreshToken("valid-refresh");
 
@@ -212,5 +243,35 @@ class AuthServiceTest {
 
         ServiceException ex = assertThrows(ServiceException.class, () -> authService.refresh(request));
         assertEquals(ErrorCode.EXPIRED_REFRESH_TOKEN, ex.getErrorCode());
+    }
+
+    @Test
+    void refresh_WhenUserIsInactive_ThrowsException() {
+        RefreshRequest request = new RefreshRequest().refreshToken("token");
+        RefreshToken storedToken = RefreshToken.builder()
+                .user(User.builder().active(false).build())
+                .expiryDate(LocalDateTime.now().plusDays(1))
+                .build();
+
+        when(jwtTokenProvider.validateToken(any())).thenReturn(true);
+        when(refreshTokenRepository.findByToken(any())).thenReturn(storedToken);
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> authService.refresh(request));
+
+        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+    }
+
+    @Test
+    void refresh_WhenTokenNotFound_ThrowsException() {
+        RefreshRequest request = new RefreshRequest().refreshToken("invalid");
+
+        when(jwtTokenProvider.validateToken(any())).thenReturn(true);
+        when(refreshTokenRepository.findByToken(any())).thenReturn(null);
+
+        ServiceException ex = assertThrows(ServiceException.class,
+                () -> authService.refresh(request));
+
+        assertEquals(ErrorCode.INVALID_REFRESH_TOKEN, ex.getErrorCode());
     }
 }
