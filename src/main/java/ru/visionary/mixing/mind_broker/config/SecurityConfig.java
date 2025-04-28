@@ -29,12 +29,12 @@ public class SecurityConfig {
     private static final String[] WITHOUT_AUTHORIZATION_ALL_METHODS = new String[] {
             "/api/v1/auth/**",
             "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/test"
+            "/v3/api-docs/**"
     };
 
     private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
-            "/api/v1/image/**"
+            "/api/v1/image/**",
+            "/api/v1/user/**"
     };
 
     @Bean
