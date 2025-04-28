@@ -6,7 +6,7 @@
 
     <groupId>ru.visionary.mixing</groupId>
     <artifactId>mind-broker</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 
     <properties>
         <maven.compiler.source>19</maven.compiler.source>
