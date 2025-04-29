@@ -1,0 +1,1 @@
+CREATE INDEX idx_image_created_at ON image(created_at);

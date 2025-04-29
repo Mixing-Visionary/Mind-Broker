@@ -161,7 +161,7 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
-        - jwt-token: [ ]
+        - jwt-token: []
   /api/v1/image/{uuid}:
     get:
       tags:
@@ -517,6 +517,125 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - jwt-token: []
+  /api/v1/user/images:
+    get:
+      tags:
+        - user
+        - image
+      summary: Получить изображения текущего пользователя
+      operationId: getCurrentUserImages
+      parameters:
+        - name: size
+          in: query
+          required: true
+          description: Кол-во изображений пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+        - name: protection
+          in: query
+          required: true
+          description: Изображения с каким уровнем доступа необходимо получить
+          schema:
+            type: string
+            example: public
+            enum:
+              - public
+              - private
+      responses:
+        '200':
+          description: Изображения пользователя успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetImagesResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/user/{userId}/images:
+    get:
+      tags:
+        - user
+        - image
+      summary: Получить изображения другого пользователя
+      operationId: getOtherUserImages
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, у которого надо получить изображения
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+        - name: size
+          in: query
+          required: true
+          description: Кол-во изображений пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Изображения пользователя успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetImagesResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     ErrorResponse:
@@ -657,6 +776,16 @@ components:
           description: UUID аватарки автора изображения
       required:
         - uuid
+    GetImagesResponse:
+      type: object
+      properties:
+        images:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImageResponse"
+          description: Найденные изображения пользователя
+      required:
+        - images
     UpdateImageRequest:
       type: object
       properties:

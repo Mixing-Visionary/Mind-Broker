@@ -29,7 +29,7 @@ public class MinioService {
     }
 
     private void uploadFile(MultipartFile file, UUID uuid, String bucket) {
-        log.info("Uploading file {} to MinIO bucket {}}", uuid, bucket);
+        log.info("Uploading file {} to MinIO bucket {}", uuid, bucket);
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)

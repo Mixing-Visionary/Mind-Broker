@@ -10,6 +10,7 @@ import ru.visionary.mixing.mind_broker.entity.Protection;
 import ru.visionary.mixing.mind_broker.repository.mapper.ImageRowMapper;
 
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -28,6 +29,17 @@ public class ImageRepository {
             FROM image i
             JOIN users u ON i.owner = u.id
             WHERE i.id = :id
+            """;
+
+    private static final String FIND_BY_OWNER_AND_PROTECTION = """
+            SELECT i.*, u.nickname, u.avatar, u.active
+            FROM image i
+            JOIN users u ON i.owner = u.id
+            WHERE i.owner = :ownerId
+                AND i.protection = :protection::protection
+            ORDER BY i.created_at DESC
+            LIMIT :size
+            OFFSET :size * :page
             """;
 
     private static final String UPDATE_PROTECTION = """
@@ -62,6 +74,16 @@ public class ImageRepository {
         } catch (EmptyResultDataAccessException e) {
             return null;
         }
+    }
+
+    public List<Image> findByOwnerAndProtection(long ownerId, Protection protection, int size, int page) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("ownerId", ownerId)
+                .addValue("protection", protection.toString().toLowerCase())
+                .addValue("size", size)
+                .addValue("page", page);
+
+        return jdbcTemplate.queryForStream(FIND_BY_OWNER_AND_PROTECTION, params, rowMapper).toList();
     }
 
     public void updateProtection(UUID id, Protection protection) {

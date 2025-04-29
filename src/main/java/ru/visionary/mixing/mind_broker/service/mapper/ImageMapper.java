@@ -6,6 +6,8 @@ import org.mapstruct.Mappings;
 import ru.visionary.mixing.generated.model.ImageResponse;
 import ru.visionary.mixing.mind_broker.entity.Image;
 
+import java.util.List;
+
 @Mapper(componentModel = "spring")
 public interface ImageMapper {
     @Mappings({
@@ -14,4 +16,6 @@ public interface ImageMapper {
             @Mapping(target = "authorNickname", source = "image.owner.nickname")
     })
     ImageResponse toResponse(Image image);
+
+    List<ImageResponse> toResponse(List<Image> images);
 }
