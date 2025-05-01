@@ -1,7 +1,6 @@
 package ru.visionary.mixing.mind_broker.repository;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -33,14 +32,14 @@ public class UserRepository {
             SELECT *
             FROM users
             WHERE
-                email = :email
+                lower(email) = lower(:email)
             """;
 
     private static final String FIND_BY_EMAIL_OR_NICKNAME = """
             SELECT *
             FROM users
-            WHERE email = :email
-                OR nickname = :nickname
+            WHERE lower(email) = lower(:email)
+                OR lower(nickname) = lower(:nickname)
             LIMIT 1
             """;
 
@@ -67,8 +66,8 @@ public class UserRepository {
 
     public Long save(User user) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("nickname", user.nickname().toLowerCase())
-                .addValue("email", user.email().toLowerCase())
+                .addValue("nickname", user.nickname())
+                .addValue("email", user.email())
                 .addValue("password", user.getPassword());
 
         return jdbcTemplate.queryForObject(INSERT_USER, params, Long.class);
@@ -87,7 +86,7 @@ public class UserRepository {
 
     public User findByEmail(String email) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("email", email.toLowerCase());
+                .addValue("email", email);
 
         try {
             return jdbcTemplate.queryForObject(FIND_BY_EMAIL, params, userRowMapper);
@@ -98,8 +97,8 @@ public class UserRepository {
 
     public User findByEmailOrNickname(String email, String nickname) {
         MapSqlParameterSource params = new MapSqlParameterSource()
-                .addValue("email", email.toLowerCase())
-                .addValue("nickname", nickname.toLowerCase());
+                .addValue("email", email)
+                .addValue("nickname", nickname);
 
         try {
             return jdbcTemplate.queryForObject(FIND_BY_EMAIL_OR_NICKNAME, params, userRowMapper);
@@ -111,7 +110,7 @@ public class UserRepository {
     public void updateUser(long userId, String nickname, String description, String password, UUID avatar) {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", userId)
-                .addValue("nickname", StringUtils.toRootLowerCase(nickname))
+                .addValue("nickname", nickname)
                 .addValue("description", description)
                 .addValue("password", password)
                 .addValue("avatar", avatar);

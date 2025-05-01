@@ -73,7 +73,7 @@ class UserControllerTest {
                         .file(file)
                         .param("nickname", "newnick")
                         .param("description", "new desc")
-                        .param("password", "newpass")
+                        .param("password", "mynewpass")
                         .contentType(MediaType.MULTIPART_FORM_DATA))
                 .andExpect(status().isOk());
     }
@@ -87,7 +87,7 @@ class UserControllerTest {
                         .file(file)
                         .param("nickname", "newnick")
                         .param("description", "new desc")
-                        .param("password", "newpass")
+                        .param("password", "mynewpass")
                         .with(request -> {
                             request.setMethod("PUT");
                             return request;

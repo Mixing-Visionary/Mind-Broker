@@ -61,6 +61,8 @@ public abstract class AbstractRepositoryTest {
 
     @AfterEach
     void cleanupDatabase() {
+        jdbcTemplate.update("DELETE FROM processing", new MapSqlParameterSource());
+        jdbcTemplate.update("DELETE FROM style", new MapSqlParameterSource());
         jdbcTemplate.update("DELETE FROM image", new MapSqlParameterSource());
         jdbcTemplate.update("DELETE FROM refresh_token", new MapSqlParameterSource());
         jdbcTemplate.update("DELETE FROM users", new MapSqlParameterSource());

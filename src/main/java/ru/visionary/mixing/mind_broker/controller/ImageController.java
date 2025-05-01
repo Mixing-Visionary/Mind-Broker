@@ -18,7 +18,7 @@ public class ImageController implements ImageApi {
     private final ImageService imageService;
 
     @Override
-    public ResponseEntity<SaveImageResponse> saveImage(MultipartFile image, String protection) {
+    public ResponseEntity<SaveImageResponse> saveImage(String protection, MultipartFile image) {
         return ResponseEntity.ok(imageService.saveImage(image, protection));
     }
 

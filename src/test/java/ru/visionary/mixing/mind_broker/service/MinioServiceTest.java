@@ -42,7 +42,7 @@ class MinioServiceTest {
                 new byte[10]
         );
 
-        doReturn("test-bucket").when(minioProperties).getImagesBucket();
+        doReturn("test-bucket").when(minioProperties).imagesBucket();
 
         assertDoesNotThrow(() -> minioService.uploadImage(file, UUID.randomUUID()));
         verify(minioClient).putObject(any(PutObjectArgs.class));
@@ -57,7 +57,7 @@ class MinioServiceTest {
                 new byte[10]
         );
 
-        doReturn("test-bucket").when(minioProperties).getImagesBucket();
+        doReturn("test-bucket").when(minioProperties).imagesBucket();
         doThrow(new RuntimeException()).when(minioClient).putObject(any(PutObjectArgs.class));
 
         ServiceException exception = assertThrows(ServiceException.class,
@@ -69,7 +69,7 @@ class MinioServiceTest {
     @Test
     void deleteImage_SuccessfulDeletion_NoExceptions() {
         UUID uuid = UUID.randomUUID();
-        doReturn("test-bucket").when(minioProperties).getImagesBucket();
+        doReturn("test-bucket").when(minioProperties).imagesBucket();
 
         assertDoesNotThrow(() -> minioService.deleteImage(uuid));
     }
@@ -77,7 +77,7 @@ class MinioServiceTest {
     @Test
     void deleteImage_DeletionFailure_ThrowsException() throws Exception {
         UUID uuid = UUID.randomUUID();
-        doReturn("test-bucket").when(minioProperties).getImagesBucket();
+        doReturn("test-bucket").when(minioProperties).imagesBucket();
         doThrow(new RuntimeException()).when(minioClient).removeObject(any());
 
         ServiceException ex = assertThrows(ServiceException.class,

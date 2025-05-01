@@ -35,7 +35,8 @@ public class SecurityConfig {
     private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
             "/api/v1/image/*",
             "/api/v1/user/*",
-            "/api/v1/user/*/images"
+            "/api/v1/user/*/images",
+            "/api/v1/styles"
     };
 
     @Bean

@@ -17,6 +17,28 @@ spring:
   security:
     filter:
       order: 0
+  rabbitmq:
+    host: ${RABBIT_HOST}
+    port: 5672
+    username: ${RABBIT_USERNAME}
+    password: ${RABBIT_PASSWORD}
+    template:
+      max-message-size: 157286400 # 150 MB
+    listener:
+      type: simple
+      simple:
+        max-message-size: 157286400 # 150 MB
+        message-converter: jackson2JsonMessageConverter
+  cloud:
+    openfeign:
+      client:
+        config:
+          megamind:
+            connectTimeout: 5000 # 5 sec
+            readTimeout: 5000 # 5 sec
+            loggerLevel: basic
+            errorDecoder: ru.visionary.mixing.mind_broker.client.error.MegamindErrorDecoder
+            url: ${MEGAMIND_URL}
 
 app:
   jwt:
@@ -29,6 +51,24 @@ app:
     secret-key: ${MINIO_SECRET_KEY}
     images-bucket: images
     avatars-bucket: avatars
+  rabbit:
+    processing-exchange: image.processing
+    processing-queue: image-processing
+    processed-exchange: image.processed
+    processed-queue-prefix: processed-
+    processed-queue-expires: 1800000 # 30 min
+  processing:
+    max-time-from-start: PT10M
+    compression:
+      enabled: true
+      quality: 0.75
+      max-width: 1920
+      max-height: 1920
+      min-length: 1048576 # 1 MB
+  megamind:
+    api-key: ${MEGAMIND_API_KEY}
+    processing-timeout: 150 # 2 min 30 sec
+    update-styles-job-cron: 0 0/15 * * * *
 
 springdoc:
   api-docs:
@@ -44,6 +84,6 @@ logging:
   level:
     org.springframework: INFO
     org.springframework.security: INFO
-    ru.visionary.mixing: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    ru.visionary.mixing: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: INFO

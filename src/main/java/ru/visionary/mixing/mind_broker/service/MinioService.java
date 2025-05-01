@@ -21,11 +21,11 @@ public class MinioService {
     private final MinioProperties properties;
 
     public void uploadImage(MultipartFile image, UUID uuid) {
-        uploadFile(image, uuid, properties.getImagesBucket());
+        uploadFile(image, uuid, properties.imagesBucket());
     }
 
     public void uploadAvatar(MultipartFile avatar, UUID uuid) {
-        uploadFile(avatar, uuid, properties.getAvatarsBucket());
+        uploadFile(avatar, uuid, properties.avatarsBucket());
     }
 
     private void uploadFile(MultipartFile file, UUID uuid, String bucket) {
@@ -45,11 +45,11 @@ public class MinioService {
     }
 
     public void deleteImage(UUID uuid) {
-        deleteFile(uuid, properties.getImagesBucket());
+        deleteFile(uuid, properties.imagesBucket());
     }
 
     public void deleteAvatar(UUID uuid) {
-        deleteFile(uuid, properties.getAvatarsBucket());
+        deleteFile(uuid, properties.avatarsBucket());
     }
 
     private void deleteFile(UUID uuid, String bucket) {

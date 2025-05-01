@@ -73,7 +73,7 @@ class UserRepositoryTest extends AbstractRepositoryTest {
         User found = userRepository.findByEmail("TEST@eXample.com");
 
         assertNotNull(found);
-        assertEquals("test@example.com", found.email());
+        assertEquals("Test@Example.COM", found.email());
     }
 
     @Test
