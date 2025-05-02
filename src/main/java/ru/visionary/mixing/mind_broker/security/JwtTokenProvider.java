@@ -23,7 +23,7 @@ public class JwtTokenProvider {
 
     @PostConstruct
     void init() {
-        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes(StandardCharsets.UTF_8));
+        this.secretKey = Keys.hmacShaKeyFor(jwtProperties.secret().getBytes(StandardCharsets.UTF_8));
     }
 
     public String generateAccessToken(User user) {
@@ -31,7 +31,7 @@ public class JwtTokenProvider {
                 .subject(user.email())
                 .claim("roles", user.admin() ? "ROLE_ADMIN" : "ROLE_USER")
                 .issuedAt(new Date())
-                .expiration(parseExpiration(jwtProperties.getAccessTokenExpiration()))
+                .expiration(getExpiration(jwtProperties.accessTokenExpiration()))
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
@@ -40,14 +40,13 @@ public class JwtTokenProvider {
         return Jwts.builder()
                 .subject(user.email())
                 .issuedAt(new Date())
-                .expiration(parseExpiration(jwtProperties.getRefreshTokenExpiration()))
+                .expiration(getExpiration(jwtProperties.refreshTokenExpiration()))
                 .signWith(secretKey, Jwts.SIG.HS256)
                 .compact();
     }
 
-    private Date parseExpiration(String expiration) {
-        return new Date(System.currentTimeMillis() +
-                Duration.parse(expiration).toMillis());
+    private Date getExpiration(Duration expiration) {
+        return new Date(System.currentTimeMillis() + expiration.toMillis());
     }
 
     public boolean validateToken(String token) {

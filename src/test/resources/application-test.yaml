@@ -15,7 +15,3 @@ app:
     access-key: minio-access-key
     secret-key: minio-secret-key
     bucket-name: images
-
-logging:
-  level:
-    org.springframework.jdbc.core: TRACE

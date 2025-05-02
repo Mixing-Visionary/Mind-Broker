@@ -118,6 +118,17 @@ paths:
         - image
       summary: Сохранение обработанного изображения на сервере
       operationId: saveImage
+      parameters:
+        - name: protection
+          in: query
+          required: true
+          schema:
+            type: string
+            example: public
+            description: Уровень доступа к изображению (публичный или приватный)
+            enum:
+              - public
+              - private
       requestBody:
         content:
           multipart/form-data:
@@ -370,6 +381,35 @@ paths:
             format: int64
             example: 1
             minimum: 1
+        - name: nickname
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+            minLength: 4
+            maxLength: 25
+            pattern: ^\S(.*\S)?$
+            description: Новый никнейм пользователя
+            example: "admin"
+        - name: description
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+            description: Новое описание пользователя. null - оставить без изменений, '' - очистить
+            example: "Так то у меня свой бизнес, а это для души"
+        - name: password
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+            format: password
+            minLength: 8
+            description: Новый пароль пользователя
+            example: "myP4ssw0rd"
       requestBody:
         content:
           multipart/form-data:
@@ -636,6 +676,105 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/processing:
+    post:
+      tags:
+        - processing
+      summary: Обработка изображения нейросетью
+      operationId: processing
+      parameters:
+        - name: style
+          in: query
+          required: true
+          schema:
+            type: string
+            example: "сyberpunk"
+            description: Стиль, в который необходимо обработать изображение
+        - name: strength
+          in: query
+          required: false
+          schema:
+            type: number
+            multipleOf: 0.01
+            nullable: true
+            minimum: 0
+            maximum: 1
+            description: Насколько сильно обрабатывать изображение
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/ProcessingImageRequest"
+      responses:
+        '200':
+          description: Изображение успешно обработалось
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingImageResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '402':
+          description: У пользователя не открыт данный стиль
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '415':
+          description: Изображение в неподдерживаемом формате
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '429':
+          description: Достигнут лимит запросов
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/styles:
+    get:
+      tags:
+        - processing
+      summary: Получить все существующие стили
+      operationId: styles
+      responses:
+        '200':
+          description: Стили успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StylesResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален или стиль сейчас не поддерживается
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
 components:
   schemas:
     ErrorResponse:
@@ -724,16 +863,8 @@ components:
           format: binary
           nullable: false
           description: Изображение, которое необходимо сохранить
-        protection:
-          type: string
-          example: "public"
-          description: Уровень доступа к изображению (публичный или приватный)
-          enum:
-            - public
-            - private
       required:
         - image
-        - protection
     SaveImageResponse:
       type: object
       properties:
@@ -836,39 +967,58 @@ components:
     UpdateUserRequest:
       type: object
       properties:
-        nickname:
-          type: string
-          nullable: true
-          minLength: 4
-          maxLength: 25
-          pattern: ^\S(.*\S)?$
-          description: Новый никнейм пользователя
-          example: "admin"
-        description:
-          type: string
-          maxLength: 255
-          description: Новое описание пользователя. null - оставить без изменений, '' - очистить
-          example: "Так то у меня свой бизнес, а это для души"
-        password:
-          type: string
-          nullable: true
-          format: password
-          minLength: 8
-          description: Новый пароль пользователя
-          example: "myP4ssw0rd"
         avatar:
           type: string
           format: binary
+          nullable: true
           description: Новая аватарка пользователя
-      anyOf:
-        - required:
-          - nickname
-        - required:
-          - description
-        - required:
-          - password
-        - required:
-          - avatar
+    ProcessingImageRequest:
+      type: object
+      properties:
+        image:
+          type: string
+          format: binary
+          nullable: false
+          description: Изображение, которое необходимо обработать
+      required:
+        - image
+    ProcessingImageResponse:
+      type: object
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+          description: uuid запроса на обработку
+      required:
+        - uuid
+    StyleResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Название стиля
+          example: "Киберпанк"
+        available:
+          type: boolean
+          description: Доступен ли данный стиль пользователю
+          example: true
+        icon:
+          type: string
+          description: Название иконки для стиля
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      required:
+        - name
+        - available
+    StylesResponse:
+      type: object
+      properties:
+        styles:
+          type: array
+          items:
+            $ref: "#/components/schemas/StyleResponse"
+      required:
+        - styles
   securitySchemes:
     jwt-token:
       type: http

@@ -16,14 +16,14 @@ public class ImageUtils {
     private static final Set<String> allowedExtension = Set.of("jpeg", "jpg");
 
     public static void checkImage(MultipartFile image) {
-        if (image.isEmpty()) {
-            log.error("Uploading error: empty file");
+        if (image == null || image.isEmpty()) {
+            log.error("Image error: empty file");
             throw new ServiceException(ErrorCode.EMPTY_FILE);
         }
 
         if (!allowedContentType.contains(image.getContentType())
                 || !allowedExtension.contains(FilenameUtils.getExtension(image.getOriginalFilename()))) {
-            log.error("Uploading error: not supported file format");
+            log.error("Image error: not supported file format");
             throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
         }
 
@@ -31,12 +31,12 @@ public class ImageUtils {
         try {
             img = ImageIO.read(image.getInputStream());
         } catch (Exception e) {
-            log.error("Uploading error: not supported file format");
+            log.error("Image error: not supported file format");
             throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
         }
 
         if (img == null) {
-            log.error("Uploading error: not supported file format");
+            log.error("Image error: not supported file format");
             throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);
         }
     }

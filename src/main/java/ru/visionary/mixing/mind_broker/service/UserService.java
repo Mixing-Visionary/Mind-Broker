@@ -81,6 +81,7 @@ public class UserService {
         password = password == null ? null : passwordEncoder.encode(password);
         UUID avatarUuid = null;
         if (avatar != null) {
+            log.debug("Uploading new avatar for user: {}", userId);
             ImageUtils.checkImage(avatar);
             avatarUuid = UUID.randomUUID();
         }
