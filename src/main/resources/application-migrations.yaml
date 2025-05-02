@@ -1,0 +1,7 @@
+---
+spring:
+  activate:
+    on-profile: migrations
+  liquibase:
+    enabled: true
+    change-log: classpath:migration/migration.xml

@@ -69,30 +69,31 @@ jobs:
             "$MINIO_URL" \
             "$MINIO_ACCESS_KEY" \
             "$MINIO_SECRET_KEY" \
-            "RABBIT_HOST" \
-            "RABBIT_USERNAME" \
-            "RABBIT_PASSWORD" \
-            "MEGAMIND_URL" \
-            "MEGAMIND_API_KEY" << 'EOF'
+            "$RABBIT_HOST" \
+            "$RABBIT_USERNAME" \
+            "$RABBIT_PASSWORD" \
+            "$MEGAMIND_URL" \
+            "$MEGAMIND_API_KEY" << 'EOF'
 
             cd /mind-broker
 
-            DB_URL=$1
-            DB_USERNAME=$2
-            DB_PASSWORD=$3
-            JWT_SECRET=$4
-            MINIO_URL=$5
-            MINIO_ACCESS_KEY=$6
-            MINIO_SECRET_KEY=$7
-            RABBIT_HOST=$8
-            RABBIT_USERNAME=$9
-            RABBIT_PASSWORD=$10
-            MEGAMIND_URL=$11
-            MEGAMIND_API_KEY=$12
+            DB_URL=${1}
+            DB_USERNAME=${2}
+            DB_PASSWORD=${3}
+            JWT_SECRET=${4}
+            MINIO_URL=${5}
+            MINIO_ACCESS_KEY=${6}
+            MINIO_SECRET_KEY=${7}
+            RABBIT_HOST=${8}
+            RABBIT_USERNAME=${9}
+            RABBIT_PASSWORD=${10}
+            MEGAMIND_URL=${11}
+            MEGAMIND_API_KEY=${12}
 
             docker build -t mind-broker:latest .
 
             docker run --rm \
+              -e SPRING_PROFILES_ACTIVE="migrations" \
               -e SPRING_DATASOURCE_URL="$DB_URL" \
               -e SPRING_DATASOURCE_USERNAME="$DB_USERNAME" \
               -e SPRING_DATASOURCE_PASSWORD="$DB_PASSWORD" \
@@ -106,7 +107,7 @@ jobs:
               -e MEGAMIND_URL="$MEGAMIND_URL" \
               -e MEGAMIND_API_KEY="$MEGAMIND_API_KEY" \
               -e SPRING_MAIN_WEB-APPLICATION-TYPE=none \
-              mind-broker:latest || exit 1
+              mind-broker:latest migrations || exit 1
 
             echo "Migration completed"
   
