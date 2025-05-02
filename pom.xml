@@ -29,6 +29,7 @@
         <openapi.version>7.12.0</openapi.version>
         <spring-cloud.version>4.2.1</spring-cloud.version>
         <feign.version>13.6</feign.version>
+        <prometheus.version>1.15.0-M3</prometheus.version>
         <testcontainers.version>1.20.6</testcontainers.version>
     </properties>
 
@@ -148,6 +149,18 @@
             <groupId>io.github.openfeign</groupId>
             <artifactId>feign-okhttp</artifactId>
             <version>${feign.version}</version>
+        </dependency>
+
+        <!--Monitoring-->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <version>${spring-boot.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-registry-prometheus</artifactId>
+            <version>${prometheus.version}</version>
         </dependency>
 
         <!--Tests-->

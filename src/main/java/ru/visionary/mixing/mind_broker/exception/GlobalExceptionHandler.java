@@ -18,6 +18,7 @@ import ru.visionary.mixing.generated.model.ErrorResponse;
 @ControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
+
     @ExceptionHandler(DataAccessException.class)
     public ResponseEntity<Object> handleDataAccessException(DataAccessException ex) {
         log.error("Database error: {}", ex.getMessage(), ex);
