@@ -69,6 +69,20 @@ app:
     processing-timeout: 150 # 2 min 30 sec
     update-styles-job-cron: 0 0/15 * * * *
 
+management:
+  metrics:
+    enable:
+      all: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      percentiles:
+        http.server.request: 0.80,0.95,0.99
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
 springdoc:
   api-docs:
     enabled: true
