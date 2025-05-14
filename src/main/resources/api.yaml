@@ -9,8 +9,12 @@ tags:
     description: Операции, связанные с авторизацией, регистрацией пользователя
   - name: user
     description: Операции, связанные с пользователями
+  - name: processing
+    description: Операции, связанные с обработкой изображения
   - name: image
     description: Операции, связанные с изображениями
+  - name: comment
+    description: Операции, связанные с комментариями
 paths:
   /api/v1/auth/register:
     post:
@@ -775,6 +779,232 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/image/{uuid}/like:
+    post:
+      tags:
+        - image
+      summary: Поставить лайк изображению
+      operationId: like
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, которому поставить лайк
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      responses:
+        '200':
+          description: Лайк успешно поставлен
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Нету доступа к изображению
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Лайк на это изображение уже стоит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+    delete:
+      tags:
+        - image
+      summary: Убрать лайк с изображения
+      operationId: dislike
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, лайк с которого необходимо убрать
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      responses:
+        '200':
+          description: Лайк успешно убран
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Нету доступа к изображению
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Лайк на это изображение не стоит
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/image/{uuid}/comment:
+    post:
+      tags:
+        - comment
+        - image
+      summary: Оставить комментарий к изображению
+      operationId: saveComment
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, к которому нужно оставить комментарий
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SaveCommentRequest"
+      responses:
+        '200':
+          description: Комментарий успешно сохранен
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Нету доступа к этому изображению
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение не найдено
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/image/{uuid}/comments:
+    get:
+      tags:
+        - comment
+        - image
+      summary: Получить комментарии к изображению
+      operationId: getComments
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid изображения, комментарии которого надо получить
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+        - name: size
+          in: query
+          required: true
+          description: Кол-во комментариев, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Комментарии к изображению успешно получены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetCommentsResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Нету доступа к этому изображению
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Изображение или комментарии не найдены
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
 components:
   schemas:
     ErrorResponse:
@@ -1019,6 +1249,66 @@ components:
             $ref: "#/components/schemas/StyleResponse"
       required:
         - styles
+    SaveCommentRequest:
+      type: object
+      properties:
+        comment:
+          type: string
+          maxLength: 255
+          description: Комментарий пользователя
+          example: "Фотка огонь"
+      required:
+        - comment
+    CommentResponse:
+      type: object
+      properties:
+        authorId:
+          type: integer
+          format: int64
+          description: id пользователя, оставившего комментарий
+          example: 1
+          minimum: 1
+        authorNickname:
+          type: string
+          minLength: 4
+          maxLength: 25
+          pattern: ^\S(.*\S)?$
+          description: Никнейм пользователя, оставившего комментарий
+          example: "admin"
+        authorAvatarUuid:
+          type: string
+          format: uuid
+          description: uuid аватарки пользователя, оставившего комментарий
+          example: "743c8075-7d10-4834-8706-78b8fe88b352"
+        authorActive:
+          type: boolean
+          description: Активен ли автор комментария
+          example: true
+        commentId:
+          type: integer
+          format: int64
+          description: id комментария
+          example: 3
+        comment:
+          type: string
+          maxLength: 255
+          description: Комментарий пользователя
+          example: "Фотка огонь"
+        createdAt:
+          type: string
+          description: Время создания комментария
+          example: "06.03.2025 14:25:39"
+      required:
+        - commentId
+        - comment
+        - createdAt
+    GetCommentsResponse:
+      type: object
+      properties:
+        comments:
+          type: array
+          items:
+            $ref: "#/components/schemas/CommentResponse"
   securitySchemes:
     jwt-token:
       type: http
