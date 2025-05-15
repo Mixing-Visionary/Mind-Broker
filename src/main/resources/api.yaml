@@ -1005,6 +1005,107 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - {}
+  /api/v1/user/{userId}/follow:
+    post:
+      tags:
+        - user
+      summary: Подписаться на пользователя
+      operationId: follow
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, на которого нужно подписаться
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+      responses:
+        '200':
+          description: Подписка успешна
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Пользователь уже подписан на другого пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+    delete:
+      tags:
+        - user
+      summary: Отписаться от пользователя
+      operationId: unfollow
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, от которого нужно отписаться
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+      responses:
+        '200':
+          description: Отписка успешна
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Пользователь не подписан на другого пользователя
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
 components:
   schemas:
     ErrorResponse:

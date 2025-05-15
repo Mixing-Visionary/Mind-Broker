@@ -13,17 +13,14 @@ import ru.visionary.mixing.generated.model.GetImagesResponse;
 import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
+import ru.visionary.mixing.mind_broker.service.FollowService;
 import ru.visionary.mixing.mind_broker.service.ImageService;
 import ru.visionary.mixing.mind_broker.service.UserService;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -35,6 +32,8 @@ class UserControllerTest {
     private ImageService imageService;
     @MockBean
     private UserService userService;
+    @MockBean
+    private FollowService followService;
 
     @Test
     void getUser_ValidRequest_ReturnsUser() throws Exception {
@@ -194,5 +193,39 @@ class UserControllerTest {
                         .param("size", "10")
                         .param("page", "0"))
                 .andExpect(status().isGone());
+    }
+
+    @Test
+    void follow_ValidRequest_Returns200() throws Exception {
+        mockMvc.perform(post("/api/v1/user/{userId}/follow", 2L)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void follow_UserNotFound_Returns404() throws Exception {
+        doThrow(new ServiceException(ErrorCode.USER_NOT_FOUND))
+                .when(followService).follow(anyLong());
+
+        mockMvc.perform(post("/api/v1/user/{userId}/follow", 999L)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void unfollow_ValidRequest_Returns200() throws Exception {
+        mockMvc.perform(delete("/api/v1/user/{userId}/follow", 2L)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void unfollow_NotFollowing_Returns409() throws Exception {
+        doThrow(new ServiceException(ErrorCode.NOT_FOLLOWING))
+                .when(followService).unfollow(anyLong());
+
+        mockMvc.perform(delete("/api/v1/user/{userId}/follow", 2L)
+                        .header("Authorization", "Bearer valid-token"))
+                .andExpect(status().isConflict());
     }
 }
