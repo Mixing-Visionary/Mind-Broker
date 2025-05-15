@@ -9,7 +9,6 @@ import ru.visionary.mixing.mind_broker.entity.Image;
 import ru.visionary.mixing.mind_broker.entity.Protection;
 import ru.visionary.mixing.mind_broker.repository.mapper.ImageRowMapper;
 
-import java.sql.Timestamp;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,7 +20,7 @@ public class ImageRepository {
 
     private static final String INSERT_IMAGE = """
             INSERT INTO image (id, owner, protection, created_at)
-            VALUES (:id, :owner, :protection::protection, :createdAt)
+            VALUES (:id, :owner, :protection::protection, current_timestamp)
             """;
 
     private static final String FIND_BY_ID = """
@@ -58,8 +57,7 @@ public class ImageRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("id", uuid)
                 .addValue("owner", image.owner().id())
-                .addValue("protection", image.protection().toString().toLowerCase())
-                .addValue("createdAt", Timestamp.valueOf(image.createdAt()));
+                .addValue("protection", image.protection().toString().toLowerCase());
 
         jdbcTemplate.update(INSERT_IMAGE, params);
         return uuid;

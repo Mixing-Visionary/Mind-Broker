@@ -71,7 +71,7 @@ public class AuthService {
 
         if (!user.active()) {
             log.warn("Login failed - user is inactive: {}", request.getEmail());
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
         log.info("Generating tokens for user: {}", user.email());
@@ -102,7 +102,7 @@ public class AuthService {
         }
 
         if (!storedToken.user().active()) {
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
         if (storedToken.expiryDate().isBefore(LocalDateTime.now())) {
