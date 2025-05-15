@@ -21,14 +21,9 @@ import ru.visionary.mixing.mind_broker.service.mapper.AuthMapper;
 
 import java.time.LocalDateTime;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthServiceTest {
@@ -173,7 +168,7 @@ class AuthServiceTest {
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> authService.login(request));
 
-        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+        assertEquals(ErrorCode.OWNER_DELETED, ex.getErrorCode());
     }
 
     @Test
@@ -259,7 +254,7 @@ class AuthServiceTest {
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> authService.refresh(request));
 
-        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+        assertEquals(ErrorCode.OWNER_DELETED, ex.getErrorCode());
     }
 
     @Test

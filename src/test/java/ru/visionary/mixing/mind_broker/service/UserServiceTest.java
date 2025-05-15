@@ -16,17 +16,9 @@ import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
@@ -50,7 +42,7 @@ class UserServiceTest {
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> userService.getUser(1L));
 
-        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+        assertEquals(ErrorCode.OWNER_DELETED, ex.getErrorCode());
     }
 
     @Test
@@ -152,7 +144,7 @@ class UserServiceTest {
             ServiceException ex = assertThrows(ServiceException.class,
                     () -> userService.deleteUser(1L));
 
-            assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+            assertEquals(ErrorCode.CURRENT_USER_DELETED, ex.getErrorCode());
         }
     }
 
