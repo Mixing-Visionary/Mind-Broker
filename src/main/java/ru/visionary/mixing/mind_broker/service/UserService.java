@@ -39,7 +39,7 @@ public class UserService {
         }
         if (!user.active()) {
             log.error("Fetching error: user deleted");
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
         log.info("Successfully retrieved user: {}", userId);
@@ -59,11 +59,11 @@ public class UserService {
 
         if (!authorizedUser.active()) {
             log.error("Attempt to update by inactive user: {}", authorizedUser.email());
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
         }
         if (!(authorizedUser.id().equals(userId) || authorizedUser.admin())) {
             log.warn("Unauthorized update attempt. User {} trying to update {}", authorizedUser.id(), userId);
-            throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
+            throw new ServiceException(ErrorCode.ACCESS_FORBIDDEN);
         }
 
         User updatingUser = authorizedUser.id().equals(userId) ? authorizedUser : userRepository.findById(userId);
@@ -73,7 +73,7 @@ public class UserService {
         }
         if (!updatingUser.active()) {
             log.error("Attempt to update inactive user: {}", updatingUser.email());
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
         log.debug("Updating user: {}", updatingUser.email());
@@ -87,6 +87,11 @@ public class UserService {
         }
 
         userRepository.updateUser(userId, nickname, description, password, avatarUuid);
+
+        if (password != null) {
+            log.info("Password changed, deleting refresh tokens for user: {}", userId);
+            refreshTokenRepository.deleteByUser(userId);
+        }
 
         if (avatarUuid != null) {
             log.debug("Uploading new avatar for user: {}", userId);
@@ -110,11 +115,11 @@ public class UserService {
         }
         if (!authorizedUser.active()) {
             log.error("Delete attempt by inactive user: {}", authorizedUser.email());
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
         }
         if (!(authorizedUser.id().equals(userId) || authorizedUser.admin())) {
             log.warn("Unauthorized delete attempt. User {} trying to delete {}", authorizedUser.id(), userId);
-            throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
+            throw new ServiceException(ErrorCode.ACCESS_FORBIDDEN);
         }
 
         User user = userRepository.findById(userId);
@@ -140,11 +145,11 @@ public class UserService {
         }
         if (!authorizedUser.active()) {
             log.error("Avatar deletion attempt by inactive user: {}", authorizedUser.email());
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
         }
         if (!(authorizedUser.id().equals(userId) || authorizedUser.admin())) {
             log.warn("Unauthorized avatar deletion. User {} trying to delete avatar for {}", authorizedUser.id(), userId);
-            throw new ServiceException(ErrorCode.ACCESS_FORBIDEN);
+            throw new ServiceException(ErrorCode.ACCESS_FORBIDDEN);
         }
 
         User user = userRepository.findById(userId);
@@ -154,7 +159,7 @@ public class UserService {
         }
         if (!user.active()) {
             log.error("Avatar deletion for inactive user: {}", userId);
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
         UUID avatarUuid = user.avatar();
