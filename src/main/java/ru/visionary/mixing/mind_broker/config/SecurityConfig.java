@@ -38,7 +38,8 @@ public class SecurityConfig {
             "/api/v1/user/*",
             "/api/v1/user/*/images",
             "/api/v1/styles",
-            "/api/v1/image/*/comments"
+            "/api/v1/image/*/comments",
+            "/api/v1/feed"
     };
 
     @Bean

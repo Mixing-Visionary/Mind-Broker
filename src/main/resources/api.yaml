@@ -15,6 +15,8 @@ tags:
     description: Операции, связанные с изображениями
   - name: comment
     description: Операции, связанные с комментариями
+  - name: feed
+    description: Операции, связанные с лентой
 paths:
   /api/v1/auth/register:
     post:
@@ -1105,6 +1107,67 @@ paths:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
+        - jwt-token: []
+  /api/v1/feed:
+    get:
+      tags:
+        - feed
+      summary: Получить изображения из ленты публикаций
+      operationId: getFeed
+      parameters:
+        - name: sort
+          in: query
+          required: true
+          description: Сортировка ленты по новым/популярным/подписки
+          schema:
+            type: string
+            enum:
+              - new
+              - popular
+              - follow
+        - name: size
+          in: query
+          required: true
+          description: Кол-во изображений, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetImagesResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - {}
         - jwt-token: []
 components:
   schemas:
