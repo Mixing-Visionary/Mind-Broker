@@ -37,7 +37,9 @@ public class SecurityConfig {
             "/api/v1/image/*",
             "/api/v1/user/*",
             "/api/v1/user/*/images",
-            "/api/v1/styles"
+            "/api/v1/styles",
+            "/api/v1/image/*/comments",
+            "/api/v1/feed"
     };
 
     @Bean
@@ -66,7 +68,7 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, accessDeniedException) -> {
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setStatus(HttpStatus.FORBIDDEN.value());
-                            response.getWriter().write(ErrorCode.ACCESS_FORBIDEN.toString());
+                            response.getWriter().write(ErrorCode.ACCESS_FORBIDDEN.toString());
                         })
                 );
 

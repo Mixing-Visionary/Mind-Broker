@@ -15,17 +15,14 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ImageRepository;
+import ru.visionary.mixing.mind_broker.repository.LikeRepository;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ImageServiceTest {
@@ -33,6 +30,8 @@ class ImageServiceTest {
     private ImageRepository imageRepository;
     @Mock
     private MinioService minioService;
+    @Mock
+    private LikeRepository likeRepository;
 
     @InjectMocks
     private ImageService imageService;
@@ -101,7 +100,7 @@ class ImageServiceTest {
             ServiceException ex = assertThrows(ServiceException.class,
                     () -> imageService.getImage(uuid));
 
-            assertEquals(ErrorCode.ACCESS_FORBIDEN, ex.getErrorCode());
+            assertEquals(ErrorCode.ACCESS_FORBIDDEN, ex.getErrorCode());
         }
     }
 
@@ -211,7 +210,7 @@ class ImageServiceTest {
         ServiceException ex = assertThrows(ServiceException.class,
                 () -> imageService.deleteById(uuid));
 
-        assertEquals(ErrorCode.USER_DELETED, ex.getErrorCode());
+        assertEquals(ErrorCode.OWNER_DELETED, ex.getErrorCode());
     }
 
     @Test
@@ -231,6 +230,26 @@ class ImageServiceTest {
 
             verify(imageRepository).deleteById(imageId);
             verify(minioService).deleteImage(imageId);
+        }
+    }
+
+    @Test
+    void likeImage_ValidRequest_SavesLike() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            UUID imageUuid = UUID.randomUUID();
+            User user = User.builder().id(1L).active(true).build();
+            Image image = Image.builder()
+                    .id(imageUuid)
+                    .owner(User.builder().active(true).id(2L).build())
+                    .protection(Protection.PUBLIC)
+                    .build();
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(user);
+            when(imageRepository.findById(imageUuid)).thenReturn(image);
+
+            imageService.likeImage(imageUuid);
+
+            verify(likeRepository).save(user.id(), imageUuid);
         }
     }
 
