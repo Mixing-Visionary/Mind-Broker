@@ -10,11 +10,7 @@ import ru.visionary.mixing.generated.model.ProcessingImageResponse;
 import ru.visionary.mixing.mind_broker.config.properties.CompressionProperties;
 import ru.visionary.mixing.mind_broker.config.properties.ProcessingProperties;
 import ru.visionary.mixing.mind_broker.config.properties.RabbitProperties;
-import ru.visionary.mixing.mind_broker.entity.Processing;
-import ru.visionary.mixing.mind_broker.entity.ProcessingMessage;
-import ru.visionary.mixing.mind_broker.entity.ProcessingStatus;
-import ru.visionary.mixing.mind_broker.entity.Style;
-import ru.visionary.mixing.mind_broker.entity.User;
+import ru.visionary.mixing.mind_broker.entity.*;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ProcessingRepository;
@@ -52,7 +48,7 @@ public class ProcessingService {
         }
         if (!user.active()) {
             log.error("Processing error: user is inactive");
-            throw new ServiceException(ErrorCode.USER_DELETED);
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
         }
 
         Style styleEntity = styleRepository.findByName(style);

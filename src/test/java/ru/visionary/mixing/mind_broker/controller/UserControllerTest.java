@@ -97,7 +97,7 @@ class UserControllerTest {
 
     @Test
     void updateUser_UnauthorizedAccess_Returns403() throws Exception {
-        doThrow(new ServiceException(ErrorCode.ACCESS_FORBIDEN))
+        doThrow(new ServiceException(ErrorCode.ACCESS_FORBIDDEN))
                 .when(userService).updateUser(anyLong(), any(), any(), any(), any());
 
         mockMvc.perform(multipart("/api/v1/user/{userId}", 2L)
@@ -117,7 +117,7 @@ class UserControllerTest {
 
     @Test
     void deleteUser_UnauthorizedAccess_Returns403() throws Exception {
-        doThrow(new ServiceException(ErrorCode.ACCESS_FORBIDEN))
+        doThrow(new ServiceException(ErrorCode.ACCESS_FORBIDDEN))
                 .when(userService).deleteUser(anyLong());
 
         mockMvc.perform(delete("/api/v1/user/{userId}", 1L))
@@ -188,7 +188,7 @@ class UserControllerTest {
     @Test
     void getOtherUserImages_UserDeleted_Returns410() throws Exception {
         when(imageService.getImagesByUserId(anyLong(), anyInt(), anyInt()))
-                .thenThrow(new ServiceException(ErrorCode.USER_DELETED));
+                .thenThrow(new ServiceException(ErrorCode.CURRENT_USER_DELETED));
 
         mockMvc.perform(get("/api/v1/user/{userId}/images", 1L)
                         .param("size", "10")

@@ -38,4 +38,16 @@ public class ImageController implements ImageApi {
         imageService.deleteById(uuid);
         return ResponseEntity.ok().build();
     }
+
+    @Override
+    public ResponseEntity<Void> like(UUID uuid) {
+        imageService.likeImage(uuid);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> dislike(UUID uuid) {
+        imageService.dislikeImage(uuid);
+        return ResponseEntity.ok().build();
+    }
 }

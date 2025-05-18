@@ -19,10 +19,8 @@ import java.time.LocalDateTime;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ProcessingListenerTest {
@@ -55,20 +53,20 @@ class ProcessingListenerTest {
 
     @Test
     void processImage_WhenTimeoutExpired_ShouldCancelProcessing() {
-        ProcessingMessage message = new ProcessingMessage(
-                UUID.randomUUID(), "image", "style", BigDecimal.valueOf(0.8)
-        );
-        when(processingRepository.getStartTimeById(any()))
-                .thenReturn(LocalDateTime.now());
+        UUID uuid = UUID.randomUUID();
+        ProcessingMessage message = new ProcessingMessage(uuid, "image", "style", BigDecimal.valueOf(0.8));
+
+        LocalDateTime oldStartTime = LocalDateTime.now().minusMinutes(11);
+        when(processingRepository.getStartTimeById(uuid)).thenReturn(oldStartTime);
+
         when(rabbitProperties.processedQueueExpires()).thenReturn(1800000);
+        when(processingProperties.maxTimeFromStart()).thenReturn(Duration.parse("PT10M"));
         when(rabbitProperties.processedExchange()).thenReturn("exchange");
 
         processingListener.processImage(message);
 
-        verify(processingRepository).updateStatus(message.uuid(), ProcessingStatus.CANCELED);
-        verify(amqpTemplate).convertAndSend(
-                anyString(), anyString(), any(ProcessingResultMessage.class)
-        );
+        verify(processingRepository).updateStatus(uuid, ProcessingStatus.CANCELED);
+        verify(amqpTemplate).convertAndSend(eq("exchange"), eq(uuid.toString()), any(ProcessingResultMessage.class));
     }
 
     @Test
