@@ -10,12 +10,10 @@ import ru.visionary.mixing.mind_broker.entity.Style;
 import ru.visionary.mixing.mind_broker.entity.User;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class ProcessingRepositoryTest extends AbstractRepositoryTest {
@@ -122,5 +120,27 @@ class ProcessingRepositoryTest extends AbstractRepositoryTest {
         LocalDateTime startTime = processingRepository.getStartTimeById(processingId);
 
         assertEquals(processing.startTime(), startTime);
+    }
+
+    @Test
+    void cancelPending_WithPendingStatus_ShouldCancel() {
+        int affected = processingRepository.cancelPending(processingId);
+
+        assertEquals(1, affected);
+        Processing updated = processingRepository.findById(processingId);
+        assertEquals(ProcessingStatus.CANCELED, updated.status());
+    }
+
+    @Test
+    void cancelLongProcessing_ShouldNotAffectRecentProcessing() {
+        processingRepository.updateStatus(processingId, ProcessingStatus.PROCESSING);
+
+        List<Processing> canceled = processingRepository.cancelLongProcessing(
+                LocalDateTime.now().minusMinutes(5)
+        );
+
+        assertTrue(canceled.isEmpty());
+        Processing notUpdated = processingRepository.findById(processingId);
+        assertEquals(ProcessingStatus.PROCESSING, notUpdated.status());
     }
 }

@@ -53,11 +53,12 @@ app:
   rabbit:
     processing-exchange: image.processing
     processing-queue: image-processing
-    processed-exchange: image.processed
-    processed-queue-prefix: processed-
-    processed-queue-expires: 1800000 # 30 min
   processing:
     max-time-from-start: PT10M
+    result-ttl-minutes: 15
+    clear-old-result-job-cron: 0 0/15 * * * *
+    max-processing-time-minutes: 4
+    cancel-long-processing-job-cron: 0 0/5 * * * *
     compression:
       enabled: true
       quality: 0.75

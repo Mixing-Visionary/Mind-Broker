@@ -11,6 +11,7 @@ import ru.visionary.mixing.mind_broker.repository.mapper.ProcessingRowMapper;
 
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Repository
@@ -41,6 +42,34 @@ public class ProcessingRepository {
             UPDATE processing
             SET status = :status::processing_status, status_at = current_timestamp
             WHERE id = :id
+            """;
+
+    private static final String CANCEL_PENDING_BY_ID = """
+            UPDATE processing
+            SET status = 'CANCELED'::processing_status, status_at = current_timestamp
+            WHERE id = :id
+                AND status = 'PENDING'::processing_status
+            """;
+
+    private static final String CLEAR_RESULT_WHERE_LOADED_BEFORE = """
+            UPDATE processing
+            SET result = null
+            WHERE status = 'COMPLETED'::processing_status
+                AND result IS NOT NULL
+                AND status_at < :time
+            """;
+
+    private static final String CANCEL_LONG_PROCESSING = """
+            WITH updated_processing AS (
+                UPDATE processing
+                SET status = 'CANCELED'::processing_status, status_at = current_timestamp
+                WHERE status = 'PROCESSING'::processing_status
+                    AND status_at < :time
+                RETURNING *
+            )
+            SELECT p.*, s.id AS style_id, s.name AS style_name, s.icon, s.active AS style_active
+            FROM updated_processing p
+            JOIN style s ON p.style = s.id
             """;
 
     public void save(Processing processing) {
@@ -75,5 +104,26 @@ public class ProcessingRepository {
                 .addValue("id", id)
                 .addValue("status", status.name());
         jdbcTemplate.update(UPDATE_STATUS, params);
+    }
+
+    public int cancelPending(UUID id) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("id", id);
+
+        return jdbcTemplate.update(CANCEL_PENDING_BY_ID, params);
+    }
+
+    public void clearResultWhereLoadedBefore(LocalDateTime time) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("time", time);
+
+        jdbcTemplate.update(CLEAR_RESULT_WHERE_LOADED_BEFORE, params);
+    }
+
+    public List<Processing> cancelLongProcessing(LocalDateTime time) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("time", time);
+
+        return jdbcTemplate.queryForStream(CANCEL_LONG_PROCESSING, params, rowMapper).toList();
     }
 }

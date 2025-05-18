@@ -25,6 +25,7 @@ public class ProcessingRowMapper implements RowMapper<Processing> {
                 .startTime(rs.getTimestamp("start_time").toLocalDateTime())
                 .status(ProcessingStatus.valueOf(rs.getString("status")))
                 .statusAt(rs.getTimestamp("status_at").toLocalDateTime())
+                .result(rs.getString("result"))
                 .build();
     }
 }

@@ -28,6 +28,7 @@ public enum ErrorCode {
     OWNER_DELETED(-19, "Owner user is deleted", HttpStatus.GONE),
     ALREADY_FOLLOWING(-20, "Already following", HttpStatus.CONFLICT),
     NOT_FOLLOWING(-21, "Not following", HttpStatus.CONFLICT),
+    PROCESSING_NOT_FOUND(-22, "Processing request not found", HttpStatus.NOT_FOUND),
     DATABASE_EXCEPTION(-100, "Database exception", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_UPLOAD_MINIO(-101, "Failed upload file to MinIO", HttpStatus.INTERNAL_SERVER_ERROR),
     FAILED_DELETE_MINIO(-102, "Failed delete file from MinIO", HttpStatus.INTERNAL_SERVER_ERROR),

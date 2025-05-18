@@ -12,5 +12,6 @@ public record Processing(
         Style style,
         LocalDateTime startTime,
         ProcessingStatus status,
-        LocalDateTime statusAt
+        LocalDateTime statusAt,
+        String result
 ) {}
