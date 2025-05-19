@@ -11,6 +11,7 @@ import ru.visionary.mixing.mind_broker.repository.mapper.ImageRowMapper;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
@@ -81,7 +82,9 @@ public class ImageRepository {
                 .addValue("size", size)
                 .addValue("page", page);
 
-        return jdbcTemplate.queryForStream(FIND_BY_OWNER_AND_PROTECTION, params, rowMapper).toList();
+        try (Stream<Image> stream = jdbcTemplate.queryForStream(FIND_BY_OWNER_AND_PROTECTION, params, rowMapper)) {
+            return stream.toList();
+        }
     }
 
     public void updateProtection(UUID id, Protection protection) {
