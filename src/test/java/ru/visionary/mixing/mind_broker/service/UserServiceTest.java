@@ -5,13 +5,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
+import ru.visionary.mixing.mind_broker.service.mapper.UserMapperImpl;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
 import java.util.UUID;
@@ -30,6 +34,8 @@ class UserServiceTest {
     private MinioService minioService;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Spy
+    private UserMapperImpl userMapper;
 
     @InjectMocks
     private UserService userService;
@@ -43,6 +49,51 @@ class UserServiceTest {
                 () -> userService.getUser(1L));
 
         assertEquals(ErrorCode.OWNER_DELETED, ex.getErrorCode());
+    }
+
+    @Test
+    void getCurrentUser_AuthenticatedActiveUser_ReturnsUser() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            User expectedUser = User.builder()
+                    .id(1L)
+                    .nickname("testuser")
+                    .email("test@example.com")
+                    .active(true)
+                    .build();
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(expectedUser);
+
+            UserResponse response = userService.getCurrentUser();
+
+            assertNotNull(response);
+            assertEquals(expectedUser.id(), response.getUserId());
+            assertEquals(expectedUser.nickname(), response.getNickname());
+        }
+    }
+
+    @Test
+    void getCurrentUser_Unauthenticated_ThrowsException() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(null);
+
+            ServiceException ex = assertThrows(ServiceException.class,
+                    () -> userService.getCurrentUser());
+
+            assertEquals(ErrorCode.USER_NOT_AUTHORIZED, ex.getErrorCode());
+        }
+    }
+
+    @Test
+    void getCurrentUser_UserInactive_ThrowsException() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            User inactiveUser = User.builder().id(1L).active(false).build();
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(inactiveUser);
+
+            ServiceException ex = assertThrows(ServiceException.class,
+                    () -> userService.getCurrentUser());
+
+            assertEquals(ErrorCode.CURRENT_USER_DELETED, ex.getErrorCode());
+        }
     }
 
     @Test
@@ -70,6 +121,24 @@ class UserServiceTest {
     }
 
     @Test
+    void updateCurrentUser_RemoveAvatar_UpdatesWithoutFile() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            User currentUser = User.builder()
+                    .id(1L)
+                    .avatar(UUID.randomUUID())
+                    .active(true)
+                    .build();
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(currentUser);
+
+            userService.updateCurrentUser(null, null, null, null);
+
+            verify(userRepository).updateUser(eq(1L), isNull(), isNull(), isNull(), isNull());
+            verify(minioService, never()).deleteAvatar(any());
+        }
+    }
+
+    @Test
     void deleteUser_UserDeletesSelf_Success() {
         User user = User.builder()
                 .id(1L)
@@ -86,6 +155,22 @@ class UserServiceTest {
 
         verify(userRepository).deleteUser(1L);
         verify(refreshTokenRepository).deleteByUser(1L);
+    }
+
+    @Test
+    void updateCurrentUser_InvalidAvatarFormat_ThrowsException() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            User currentUser = User.builder().id(1L).active(true).build();
+            MockMultipartFile invalidFile = new MockMultipartFile(
+                    "avatar", "test.png", "image/png", "content".getBytes());
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(currentUser);
+
+            ServiceException ex = assertThrows(ServiceException.class,
+                    () -> userService.updateCurrentUser(null, null, null, invalidFile));
+
+            assertEquals(ErrorCode.FILE_FORMAT_NOT_SUPPORTED, ex.getErrorCode());
+        }
     }
 
     @Test
@@ -108,6 +193,43 @@ class UserServiceTest {
 
         verify(minioService).deleteAvatar(oldAvatar);
         verify(userRepository).deleteAvatar(1L);
+    }
+
+    @Test
+    void deleteCurrentAvatar_WithExistingAvatar_RemovesFromStorage() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            UUID oldAvatar = UUID.randomUUID();
+            User currentUser = User.builder()
+                    .id(1L)
+                    .avatar(oldAvatar)
+                    .active(true)
+                    .build();
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(currentUser);
+
+            userService.deleteCurrentAvatar();
+
+            verify(userRepository).deleteAvatar(1L);
+            verify(minioService).deleteAvatar(oldAvatar);
+        }
+    }
+
+    @Test
+    void deleteCurrentAvatar_NoAvatar_DoesNothing() {
+        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
+            User currentUser = User.builder()
+                    .id(1L)
+                    .avatar(null)
+                    .active(true)
+                    .build();
+
+            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(currentUser);
+
+            userService.deleteCurrentAvatar();
+
+            verify(userRepository, never()).deleteAvatar(anyLong());
+            verify(minioService, never()).deleteAvatar(any());
+        }
     }
 
     @Test

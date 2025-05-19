@@ -33,6 +33,12 @@ public class SecurityConfig {
             "/actuator/prometheus"
     };
 
+    private static final String[] AUTHENTICATED_ONLY = new String[] {
+            "/api/v1/user/images",
+            "/api/v1/user",
+            "/api/v1/user/avatar"
+    };
+
     private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
             "/api/v1/image/*",
             "/api/v1/user/*",
@@ -47,7 +53,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/v1/user/images").authenticated()
+                        .requestMatchers(AUTHENTICATED_ONLY).authenticated()
                         .requestMatchers(WITHOUT_AUTHORIZATION_ALL_METHODS).permitAll()
                         .requestMatchers(HttpMethod.GET, WITHOUT_AUTHORIZATION_ONLY_GET).permitAll()
                         .anyRequest().authenticated()
