@@ -60,6 +60,41 @@ class UserControllerTest {
     }
 
     @Test
+    void getCurrentUser_ValidRequest_ReturnsUser() throws Exception {
+        UserResponse response = new UserResponse()
+                .userId(1L)
+                .nickname("currentUser")
+                .email("current@example.com");
+
+        when(userService.getCurrentUser()).thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.userId").value(1L))
+                .andExpect(jsonPath("$.nickname").value("currentUser"));
+    }
+
+    @Test
+    void getCurrentUser_Unauthenticated_Returns401() throws Exception {
+        when(userService.getCurrentUser())
+                .thenThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED));
+
+        mockMvc.perform(get("/api/v1/user"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.errorCode").value(-11));
+    }
+
+    @Test
+    void getCurrentUser_UserDeleted_Returns410() throws Exception {
+        when(userService.getCurrentUser())
+                .thenThrow(new ServiceException(ErrorCode.CURRENT_USER_DELETED));
+
+        mockMvc.perform(get("/api/v1/user"))
+                .andExpect(status().isGone())
+                .andExpect(jsonPath("$.errorCode").value(-14));
+    }
+
+    @Test
     void updateUser_ValidRequest_Returns200() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "avatar",
@@ -109,6 +144,53 @@ class UserControllerTest {
     }
 
     @Test
+    void updateCurrentUser_ValidRequest_Returns200() throws Exception {
+        MockMultipartFile file = new MockMultipartFile(
+                "avatar",
+                "avatar.jpg",
+                "image/jpeg",
+                "test content".getBytes()
+        );
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/user")
+                        .file(file)
+                        .param("nickname", "newNick")
+                        .param("description", "new desc")
+                        .param("password", "newPass123")
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void updateCurrentUser_Unauthenticated_Returns401() throws Exception {
+        doThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED))
+                .when(userService).updateCurrentUser(any(), any(), any(), any());
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/user")
+                        .param("nickname", "test")
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void updateCurrentUser_InvalidFileFormat_Returns415() throws Exception {
+        MockMultipartFile invalidFile = new MockMultipartFile(
+                "avatar",
+                "test.png",
+                "image/png",
+                "content".getBytes()
+        );
+
+        doThrow(new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED))
+                .when(userService).updateCurrentUser(any(), any(), any(), any());
+
+        mockMvc.perform(multipart(HttpMethod.PUT, "/api/v1/user")
+                        .file(invalidFile)
+                        .contentType(MediaType.MULTIPART_FORM_DATA))
+                .andExpect(status().isUnsupportedMediaType());
+    }
+
+    @Test
     void deleteUser_AdminAccess_Returns200() throws Exception {
         mockMvc.perform(delete("/api/v1/user/{userId}", 1L))
                 .andExpect(status().isOk());
@@ -121,6 +203,21 @@ class UserControllerTest {
 
         mockMvc.perform(delete("/api/v1/user/{userId}", 1L))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void deleteCurrentUser_ValidRequest_Returns200() throws Exception {
+        mockMvc.perform(delete("/api/v1/user"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteCurrentUser_Unauthenticated_Returns401() throws Exception {
+        doThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED))
+                .when(userService).deleteCurrentUser();
+
+        mockMvc.perform(delete("/api/v1/user"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -145,6 +242,21 @@ class UserControllerTest {
 
         mockMvc.perform(delete("/api/v1/user/{userId}/avatar", 999L))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void deleteCurrentAvatar_ValidRequest_Returns200() throws Exception {
+        mockMvc.perform(delete("/api/v1/user/avatar"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void deleteCurrentAvatar_Unauthenticated_Returns401() throws Exception {
+        doThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED))
+                .when(userService).deleteCurrentAvatar();
+
+        mockMvc.perform(delete("/api/v1/user/avatar"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

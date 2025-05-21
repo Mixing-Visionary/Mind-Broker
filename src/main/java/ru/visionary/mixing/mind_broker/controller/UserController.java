@@ -24,8 +24,19 @@ public class UserController implements UserApi {
     }
 
     @Override
+    public ResponseEntity<UserResponse> getCurrentUser() {
+        return ResponseEntity.ok(userService.getCurrentUser());
+    }
+
+    @Override
     public ResponseEntity<Void> updateUser(Long userId, String nickname, String description, String password, MultipartFile avatar) {
         userService.updateUser(userId, nickname, description, password, avatar);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> updateCurrentUser(String nickname, String description, String password, MultipartFile avatar) {
+        userService.updateCurrentUser(nickname, description, password, avatar);
         return ResponseEntity.ok().build();
     }
 
@@ -36,8 +47,20 @@ public class UserController implements UserApi {
     }
 
     @Override
+    public ResponseEntity<Void> deleteCurrentUser() {
+        userService.deleteCurrentUser();
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
     public ResponseEntity<Void> deleteAvatar(Long userId) {
         userService.deleteAvatar(userId);
+        return ResponseEntity.ok().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteCurrentAvatar() {
+        userService.deleteCurrentAvatar();
         return ResponseEntity.ok().build();
     }
 

@@ -331,6 +331,165 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - jwt-token: []
+  /api/v1/user:
+    get:
+      tags:
+        - user
+      summary: Получить данные текущего пользователя
+      operationId: getCurrentUser
+      responses:
+        '200':
+          description: Успешно
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+    put:
+      tags:
+        - user
+      summary: Обновить данные текущего пользователя
+      operationId: updateCurrentUser
+      parameters:
+        - name: nickname
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+            minLength: 4
+            maxLength: 25
+            pattern: ^\S(.*\S)?$
+            description: Новый никнейм пользователя
+            example: "admin"
+        - name: description
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+            description: Новое описание пользователя. null - оставить без изменений, '' - очистить
+            example: "Так то у меня свой бизнес, а это для души"
+        - name: password
+          in: query
+          required: false
+          schema:
+            type: string
+            nullable: true
+            format: password
+            minLength: 8
+            description: Новый пароль пользователя
+            example: "myP4ssw0rd"
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UpdateUserRequest"
+      responses:
+        '200':
+          description: Данные успешно обновлены
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '409':
+          description: Пользователь с таким никнеймом уже существует
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '413':
+          description: Аватарка слишком большого размера
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '415':
+          description: Аватарка в неподдерживаемом формате
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+    delete:
+      tags:
+        - user
+      summary: Удалить аккаунт текущего пользователя
+      operationId: deleteCurrentUser
+      responses:
+        '200':
+          description: Аккаунт успешно удален
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Вызвавший операцию пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/user/avatar:
+    delete:
+      tags:
+        - user
+      summary: Удалить аватар пользователя
+      operationId: deleteCurrentAvatar
+      responses:
+        '200':
+          description: Аватар успешно удален
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
   /api/v1/user/{userId}:
     get:
       tags:
