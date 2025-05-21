@@ -8,6 +8,7 @@ import ru.visionary.mixing.mind_broker.entity.Image;
 import ru.visionary.mixing.mind_broker.repository.mapper.ImageRowMapper;
 
 import java.util.List;
+import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
@@ -54,7 +55,9 @@ public class FeedRepository {
                 .addValue("size", size)
                 .addValue("page", page);
 
-        return jdbcTemplate.queryForStream(FEED_BY_NEW, params, imageRowMapper).toList();
+        try (Stream<Image> stream = jdbcTemplate.queryForStream(FEED_BY_NEW, params, imageRowMapper)) {
+            return stream.toList();
+        }
     }
 
     public List<Image> getFeedByPopular(int size, int page) {
@@ -62,7 +65,9 @@ public class FeedRepository {
                 .addValue("size", size)
                 .addValue("page", page);
 
-        return jdbcTemplate.queryForStream(FEED_BY_POPULAR, params, imageRowMapper).toList();
+        try (Stream<Image> stream = jdbcTemplate.queryForStream(FEED_BY_POPULAR, params, imageRowMapper)) {
+            return stream.toList();
+        }
     }
 
     public List<Image> getFeedByFollow(long userId, int size, int page) {
@@ -71,6 +76,8 @@ public class FeedRepository {
                 .addValue("size", size)
                 .addValue("page", page);
 
-        return jdbcTemplate.queryForStream(FEED_BY_FOLLOW, params, imageRowMapper).toList();
+        try (Stream<Image> stream = jdbcTemplate.queryForStream(FEED_BY_FOLLOW, params, imageRowMapper)) {
+            return stream.toList();
+        }
     }
 }

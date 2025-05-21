@@ -143,7 +143,7 @@ public class ImageService {
 
         if (user == null) {
             log.info("Fetching error: user not authorized");
-            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+            throw new ServiceException(ErrorCode.USER_NOT_FOUND);
         }
         if (!user.active()) {
             log.info("Fetching error: user is deleted");

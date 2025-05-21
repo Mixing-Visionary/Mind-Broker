@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 @Repository
 @RequiredArgsConstructor
@@ -124,6 +125,8 @@ public class ProcessingRepository {
         MapSqlParameterSource params = new MapSqlParameterSource()
                 .addValue("time", time);
 
-        return jdbcTemplate.queryForStream(CANCEL_LONG_PROCESSING, params, rowMapper).toList();
+        try (Stream<Processing> stream = jdbcTemplate.queryForStream(CANCEL_LONG_PROCESSING, params, rowMapper)) {
+            return stream.toList();
+        }
     }
 }
