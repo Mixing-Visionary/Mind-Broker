@@ -7,5 +7,9 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.processing")
 public record ProcessingProperties(
         Duration maxTimeFromStart,
-        CompressionProperties compression
+        CompressionProperties compression,
+        Integer resultTtlMinutes,
+        String clearOldResultJobCron,
+        Integer maxProcessingTimeMinutes,
+        String cancelLongProcessingJobCron
 ) {}

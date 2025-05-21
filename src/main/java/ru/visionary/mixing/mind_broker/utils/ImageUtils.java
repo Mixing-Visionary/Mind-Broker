@@ -12,8 +12,8 @@ import java.util.Set;
 
 @Slf4j
 public class ImageUtils {
-    private static final Set<String> allowedContentType = Set.of("image/jpeg", "image/jpg");
-    private static final Set<String> allowedExtension = Set.of("jpeg", "jpg");
+    private static final Set<String> allowedContentType = Set.of("image/jpeg", "image/jpg", "image/png");
+    private static final Set<String> allowedExtension = Set.of("jpeg", "jpg", "png");
 
     public static void checkImage(MultipartFile image) {
         if (image == null || image.isEmpty()) {

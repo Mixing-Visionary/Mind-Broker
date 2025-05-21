@@ -7,6 +7,7 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import ru.visionary.mixing.generated.model.ProcessingImageResponse;
+import ru.visionary.mixing.generated.model.ProcessingStatusResponse;
 import ru.visionary.mixing.mind_broker.config.properties.CompressionProperties;
 import ru.visionary.mixing.mind_broker.config.properties.ProcessingProperties;
 import ru.visionary.mixing.mind_broker.config.properties.RabbitProperties;
@@ -15,6 +16,7 @@ import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ProcessingRepository;
 import ru.visionary.mixing.mind_broker.repository.StyleRepository;
+import ru.visionary.mixing.mind_broker.service.mapper.ProcessingMapper;
 import ru.visionary.mixing.mind_broker.utils.ImageUtils;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
@@ -35,7 +37,7 @@ public class ProcessingService {
     private final AmqpTemplate amqpTemplate;
     private final RabbitProperties rabbitProperties;
     private final ProcessingProperties processingProperties;
-    private final RabbitService rabbitService;
+    private final ProcessingMapper processingMapper;
 
     public ProcessingImageResponse processImage(MultipartFile image, String style, BigDecimal strength) {
         ImageUtils.checkImage(image);
@@ -74,9 +76,6 @@ public class ProcessingService {
         log.info("Processing task created - ID: {}, User: {}, Style: {}", id, user.id(), styleEntity.id());
 
         try {
-            rabbitService.createResponseQueue(id);
-            log.debug("Response queue created for processing ID: {}", id);
-
             amqpTemplate.convertAndSend(
                     rabbitProperties.processingExchange(),
                     "",
@@ -90,6 +89,35 @@ public class ProcessingService {
         }
 
         return new ProcessingImageResponse(id);
+    }
+
+    public ProcessingStatusResponse getStatus(UUID uuid) {
+        log.debug("Fetching processing status - ID: {}", uuid);
+
+        User user = SecurityContextUtils.getAuthenticatedUser();
+        if (user == null) {
+            log.error("Processing error: user not authorized");
+            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+        }
+
+        Processing processing = processingRepository.findById(uuid);
+        if (processing == null) {
+            log.error("Processing error: processing not found");
+            throw new ServiceException(ErrorCode.PROCESSING_NOT_FOUND);
+        }
+        if (!processing.user().id().equals(user.id()) && !user.admin()) {
+            log.error("Processing error: access forbidden");
+            throw new ServiceException(ErrorCode.ACCESS_FORBIDDEN);
+        }
+
+        log.info("Returning processing status - ID: {}, Status: {}", uuid, processing.status());
+        return processingMapper.toResponse(processing);
+    }
+
+    public boolean cancelProcessing(UUID id) {
+        int affected = processingRepository.cancelPending(id);
+
+        return affected > 0;
     }
 
     private String convertImage(MultipartFile image) {

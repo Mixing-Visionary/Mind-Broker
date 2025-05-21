@@ -756,6 +756,54 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - jwt-token: []
+  /api/v1/processing/{uuid}:
+    get:
+      tags:
+        - processing
+      summary: Уточнить статус обработки изображения
+      operationId: getStatus
+      parameters:
+        - name: uuid
+          in: path
+          required: true
+          description: uuid операции на обработку изображения
+          schema:
+            type: string
+            format: uuid
+            example: "743c8075-7d10-4834-8706-78b8fe88b352"
+      responses:
+        '200':
+          description: Ок
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProcessingStatusResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '403':
+          description: Нету доступа к этому запросу на обработку
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Запрос на обработку не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
   /api/v1/styles:
     get:
       tags:
@@ -1386,6 +1434,24 @@ components:
           description: uuid запроса на обработку
       required:
         - uuid
+    ProcessingStatusResponse:
+      type: object
+      properties:
+        base64Image:
+          type: string
+          description: Обработанное изображение в формате base64
+        processingStatus:
+          type: string
+          example: PENDING
+          description: Текущий статус запроса на обработку
+          enum:
+            - PENDING
+            - PROCESSING
+            - COMPLETED
+            - CANCELED
+            - FAILED
+      required:
+        - processingStatus
     StyleResponse:
       type: object
       properties:
