@@ -17,6 +17,10 @@ tags:
     description: Операции, связанные с комментариями
   - name: feed
     description: Операции, связанные с лентой
+  - name: follow
+    description: Операции, связанные с подписками
+  - name: like
+    description: Операции, связанные с лайками
 paths:
   /api/v1/auth/register:
     post:
@@ -725,7 +729,6 @@ paths:
   /api/v1/user/images:
     get:
       tags:
-        - user
         - image
       summary: Получить изображения текущего пользователя
       operationId: getCurrentUserImages
@@ -786,10 +789,9 @@ paths:
   /api/v1/user/{userId}/images:
     get:
       tags:
-        - user
         - image
       summary: Получить изображения другого пользователя
-      operationId: getOtherUserImages
+      operationId: getUserImages
       parameters:
         - name: userId
           in: path
@@ -991,7 +993,7 @@ paths:
   /api/v1/image/{uuid}/like:
     post:
       tags:
-        - image
+        - like
       summary: Поставить лайк изображению
       operationId: like
       parameters:
@@ -1046,7 +1048,7 @@ paths:
         - jwt-token: []
     delete:
       tags:
-        - image
+        - like
       summary: Убрать лайк с изображения
       operationId: dislike
       parameters:
@@ -1103,7 +1105,6 @@ paths:
     post:
       tags:
         - comment
-        - image
       summary: Оставить комментарий к изображению
       operationId: saveComment
       parameters:
@@ -1153,7 +1154,6 @@ paths:
     get:
       tags:
         - comment
-        - image
       summary: Получить комментарии к изображению
       operationId: getComments
       parameters:
@@ -1217,7 +1217,7 @@ paths:
   /api/v1/user/{userId}/follow:
     post:
       tags:
-        - user
+        - follow
       summary: Подписаться на пользователя
       operationId: follow
       parameters:
@@ -1267,7 +1267,7 @@ paths:
         - jwt-token: []
     delete:
       tags:
-        - user
+        - follow
       summary: Отписаться от пользователя
       operationId: unfollow
       parameters:
@@ -1315,6 +1315,220 @@ paths:
                 $ref: "#/components/schemas/ErrorResponse"
       security:
         - jwt-token: []
+  /api/v1/user/followers:
+    get:
+      tags:
+        - follow
+      summary: Получить подписчиков пользователя
+      operationId: getCurrentFollowers
+      parameters:
+        - name: size
+          in: query
+          required: true
+          description: Кол-во подписчиков пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Список подписчиков успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/user/follows:
+    get:
+      tags:
+        - follow
+      summary: Получить подписки пользователя
+      operationId: getCurrentFollows
+      parameters:
+        - name: size
+          in: query
+          required: true
+          description: Кол-во подписок пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Список подписок успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '401':
+          description: Пользователь неавторизован
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+      security:
+        - jwt-token: []
+  /api/v1/user/{userId}/followers:
+    get:
+      tags:
+        - follow
+      summary: Получить подписчиков пользователя
+      operationId: getFollowers
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, у которого надо получить подписчиков
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+        - name: size
+          in: query
+          required: true
+          description: Кол-во подписчиков пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Список подписчиков успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /api/v1/user/{userId}/follows:
+    get:
+      tags:
+        - follow
+      summary: Получить подписки пользователя
+      operationId: getFollows
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          description: id пользователя, у которого надо получить подписки
+          schema:
+            type: integer
+            format: int64
+            example: 1
+            minimum: 1
+        - name: size
+          in: query
+          required: true
+          description: Кол-во подписок пользователя, которое нужно получить
+          schema:
+            type: integer
+            example: 10
+            minimum: 1
+        - name: page
+          in: query
+          required: true
+          description: Смещение, с которым нужно получить изображение (записи от page * size + 1 до (page + 1) * size включительно)
+          schema:
+            type: integer
+            example: 0
+            minimum: 0
+      responses:
+        '200':
+          description: Список подписок успешно получен
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UsersResponse"
+        '400':
+          description: Некорректный запрос
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '404':
+          description: Пользователь не найден
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        '410':
+          description: Пользователь удален
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
   /api/v1/feed:
     get:
       tags:
@@ -1565,6 +1779,13 @@ components:
         - userId
         - nickname
         - email
+    UsersResponse:
+      type: object
+      properties:
+        users:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserResponse"
     UpdateUserRequest:
       type: object
       properties:

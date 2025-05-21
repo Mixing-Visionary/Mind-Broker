@@ -8,6 +8,7 @@ import ru.visionary.mixing.mind_broker.exception.ServiceException;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.Set;
 
 @Slf4j
@@ -28,8 +29,8 @@ public class ImageUtils {
         }
 
         BufferedImage img;
-        try {
-            img = ImageIO.read(image.getInputStream());
+        try (InputStream is = image.getInputStream()) {
+            img = ImageIO.read(is);
         } catch (Exception e) {
             log.error("Image error: not supported file format");
             throw new ServiceException(ErrorCode.FILE_FORMAT_NOT_SUPPORTED);

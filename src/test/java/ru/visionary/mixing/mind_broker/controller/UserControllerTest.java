@@ -9,7 +9,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.visionary.mixing.generated.model.GetImagesResponse;
 import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
@@ -17,7 +16,8 @@ import ru.visionary.mixing.mind_broker.service.FollowService;
 import ru.visionary.mixing.mind_broker.service.ImageService;
 import ru.visionary.mixing.mind_broker.service.UserService;
 
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -257,87 +257,5 @@ class UserControllerTest {
 
         mockMvc.perform(delete("/api/v1/user/avatar"))
                 .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void getCurrentUserImages_ValidRequest_ReturnsImages() throws Exception {
-        GetImagesResponse response = new GetImagesResponse();
-        when(imageService.getImagesForCurrentUser(anyInt(), anyInt(), any()))
-                .thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/user/images")
-                        .param("size", "10")
-                        .param("page", "0")
-                        .param("protection", "public"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void getCurrentUserImages_Unauthenticated_Returns401() throws Exception {
-        when(imageService.getImagesForCurrentUser(anyInt(), anyInt(), any()))
-                .thenThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED));
-
-        mockMvc.perform(get("/api/v1/user/images")
-                        .param("size", "10")
-                        .param("page", "0")
-                        .param("protection", "public"))
-                .andExpect(status().isUnauthorized());
-    }
-
-    @Test
-    void getOtherUserImages_ValidRequest_ReturnsImages() throws Exception {
-        GetImagesResponse response = new GetImagesResponse();
-        when(imageService.getImagesByUserId(anyLong(), anyInt(), anyInt()))
-                .thenReturn(response);
-
-        mockMvc.perform(get("/api/v1/user/{userId}/images", 1L)
-                        .param("size", "10")
-                        .param("page", "0"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void getOtherUserImages_UserDeleted_Returns410() throws Exception {
-        when(imageService.getImagesByUserId(anyLong(), anyInt(), anyInt()))
-                .thenThrow(new ServiceException(ErrorCode.CURRENT_USER_DELETED));
-
-        mockMvc.perform(get("/api/v1/user/{userId}/images", 1L)
-                        .param("size", "10")
-                        .param("page", "0"))
-                .andExpect(status().isGone());
-    }
-
-    @Test
-    void follow_ValidRequest_Returns200() throws Exception {
-        mockMvc.perform(post("/api/v1/user/{userId}/follow", 2L)
-                        .header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void follow_UserNotFound_Returns404() throws Exception {
-        doThrow(new ServiceException(ErrorCode.USER_NOT_FOUND))
-                .when(followService).follow(anyLong());
-
-        mockMvc.perform(post("/api/v1/user/{userId}/follow", 999L)
-                        .header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isNotFound());
-    }
-
-    @Test
-    void unfollow_ValidRequest_Returns200() throws Exception {
-        mockMvc.perform(delete("/api/v1/user/{userId}/follow", 2L)
-                        .header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    void unfollow_NotFollowing_Returns409() throws Exception {
-        doThrow(new ServiceException(ErrorCode.NOT_FOLLOWING))
-                .when(followService).unfollow(anyLong());
-
-        mockMvc.perform(delete("/api/v1/user/{userId}/follow", 2L)
-                        .header("Authorization", "Bearer valid-token"))
-                .andExpect(status().isConflict());
     }
 }

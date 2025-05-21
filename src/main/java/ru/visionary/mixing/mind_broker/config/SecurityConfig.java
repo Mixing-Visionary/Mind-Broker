@@ -36,13 +36,17 @@ public class SecurityConfig {
     private static final String[] AUTHENTICATED_ONLY = new String[] {
             "/api/v1/user/images",
             "/api/v1/user",
-            "/api/v1/user/avatar"
+            "/api/v1/user/avatar",
+            "/user/follows",
+            "/user/followers"
     };
 
     private static final String[] WITHOUT_AUTHORIZATION_ONLY_GET = new String[] {
             "/api/v1/image/*",
             "/api/v1/user/*",
             "/api/v1/user/*/images",
+            "/api/v1/user/*/follows",
+            "/api/v1/user/*/followers",
             "/api/v1/styles",
             "/api/v1/image/*/comments",
             "/api/v1/feed"
