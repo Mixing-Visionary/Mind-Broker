@@ -21,6 +21,7 @@ public class FeedRepository {
             FROM image i
                 JOIN public.users u on i.owner = u.id
             WHERE protection = 'public'::protection
+                AND (:currentUser::bigint IS NULL OR u.id != :currentUser)
             ORDER BY created_at DESC
             LIMIT :size
             OFFSET :size * :page
@@ -32,6 +33,7 @@ public class FeedRepository {
                 JOIN public.users u on i.owner = u.id
                 LEFT JOIN likes l on i.id = l.image
             WHERE i.protection = 'public'::protection
+                AND (:currentUser::bigint IS NULL OR u.id != :currentUser)
             GROUP BY i.id, i.created_at, u.id
             ORDER BY count(l.*) DESC, i.created_at DESC
             LIMIT :size
@@ -50,8 +52,9 @@ public class FeedRepository {
             OFFSET :size * :page
             """;
 
-    public List<Image> getFeedByNew(int size, int page) {
+    public List<Image> getFeedByNew(Long currentUserId, int size, int page) {
         MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("currentUser", currentUserId)
                 .addValue("size", size)
                 .addValue("page", page);
 
@@ -60,8 +63,9 @@ public class FeedRepository {
         }
     }
 
-    public List<Image> getFeedByPopular(int size, int page) {
+    public List<Image> getFeedByPopular(Long currentUserId, int size, int page) {
         MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("currentUser", currentUserId)
                 .addValue("size", size)
                 .addValue("page", page);
 
