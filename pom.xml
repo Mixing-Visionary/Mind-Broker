@@ -24,7 +24,9 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok-mapstruct.version>0.2.0</lombok-mapstruct.version>
         <slf4j.version>2.0.17</slf4j.version>
-        <jackson-databind.version>0.2.6</jackson-databind.version>
+        <jackson-databind.version>2.18.3</jackson-databind.version>
+        <thumbnailator.version>0.4.20</thumbnailator.version>
+        <twelvemonkeys.version>3.12.0</twelvemonkeys.version>
         <springdoc.version>2.8.6</springdoc.version>
         <openapi.version>7.12.0</openapi.version>
         <spring-cloud.version>4.2.1</spring-cloud.version>
@@ -127,12 +129,22 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>2.18.3</version>
+            <version>${jackson-databind.version}</version>
         </dependency>
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
-            <version>0.4.20</version>
+            <version>${thumbnailator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-core</artifactId>
+            <version>${twelvemonkeys.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.twelvemonkeys.imageio</groupId>
+            <artifactId>imageio-jpeg</artifactId>
+            <version>${twelvemonkeys.version}</version>
         </dependency>
 
         <!--Api and web interaction-->

@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import ru.visionary.mixing.generated.api.ImageApi;
+import ru.visionary.mixing.generated.model.GetImagesResponse;
 import ru.visionary.mixing.generated.model.ImageResponse;
 import ru.visionary.mixing.generated.model.SaveImageResponse;
 import ru.visionary.mixing.generated.model.UpdateImageRequest;
@@ -23,6 +24,16 @@ public class ImageController implements ImageApi {
     }
 
     @Override
+    public ResponseEntity<GetImagesResponse> getCurrentUserImages(Integer size, Integer page, String protection) {
+        return ResponseEntity.ok(imageService.getImagesForCurrentUser(size, page, protection));
+    }
+
+    @Override
+    public ResponseEntity<GetImagesResponse> getUserImages(Long userId, Integer size, Integer page) {
+        return ResponseEntity.ok(imageService.getImagesByUserId(userId, size, page));
+    }
+
+    @Override
     public ResponseEntity<ImageResponse> getImage(UUID uuid) {
         return ResponseEntity.ok(imageService.getImage(uuid));
     }
@@ -36,18 +47,6 @@ public class ImageController implements ImageApi {
     @Override
     public ResponseEntity<Void> deleteImage(UUID uuid) {
         imageService.deleteById(uuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> like(UUID uuid) {
-        imageService.likeImage(uuid);
-        return ResponseEntity.ok().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> dislike(UUID uuid) {
-        imageService.dislikeImage(uuid);
         return ResponseEntity.ok().build();
     }
 }

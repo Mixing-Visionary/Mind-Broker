@@ -15,7 +15,6 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ImageRepository;
-import ru.visionary.mixing.mind_broker.repository.LikeRepository;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 
 import java.time.LocalDateTime;
@@ -30,8 +29,6 @@ class ImageServiceTest {
     private ImageRepository imageRepository;
     @Mock
     private MinioService minioService;
-    @Mock
-    private LikeRepository likeRepository;
 
     @InjectMocks
     private ImageService imageService;
@@ -230,26 +227,6 @@ class ImageServiceTest {
 
             verify(imageRepository).deleteById(imageId);
             verify(minioService).deleteImage(imageId);
-        }
-    }
-
-    @Test
-    void likeImage_ValidRequest_SavesLike() {
-        try (MockedStatic<SecurityContextUtils> utils = mockStatic(SecurityContextUtils.class)) {
-            UUID imageUuid = UUID.randomUUID();
-            User user = User.builder().id(1L).active(true).build();
-            Image image = Image.builder()
-                    .id(imageUuid)
-                    .owner(User.builder().active(true).id(2L).build())
-                    .protection(Protection.PUBLIC)
-                    .build();
-
-            utils.when(SecurityContextUtils::getAuthenticatedUser).thenReturn(user);
-            when(imageRepository.findById(imageUuid)).thenReturn(image);
-
-            imageService.likeImage(imageUuid);
-
-            verify(likeRepository).save(user.id(), imageUuid);
         }
     }
 

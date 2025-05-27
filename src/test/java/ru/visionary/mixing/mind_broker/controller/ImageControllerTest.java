@@ -8,6 +8,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.visionary.mixing.generated.model.GetImagesResponse;
 import ru.visionary.mixing.generated.model.ImageResponse;
 import ru.visionary.mixing.generated.model.SaveImageResponse;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
@@ -91,36 +92,50 @@ class ImageControllerTest {
     }
 
     @Test
-    void like_ValidRequest_ReturnsOk() throws Exception {
-        UUID imageUuid = UUID.randomUUID();
-        mockMvc.perform(post("/api/v1/image/{uuid}/like", imageUuid))
+    void getCurrentUserImages_ValidRequest_ReturnsImages() throws Exception {
+        GetImagesResponse response = new GetImagesResponse();
+        when(imageService.getImagesForCurrentUser(anyInt(), anyInt(), any()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/user/images")
+                        .param("size", "10")
+                        .param("page", "0")
+                        .param("protection", "public"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void like_AlreadyLiked_ReturnsConflict() throws Exception {
-        UUID imageUuid = UUID.randomUUID();
-        doThrow(new ServiceException(ErrorCode.ALREADY_LIKED))
-                .when(imageService).likeImage(any());
+    void getCurrentUserImages_Unauthenticated_Returns401() throws Exception {
+        when(imageService.getImagesForCurrentUser(anyInt(), anyInt(), any()))
+                .thenThrow(new ServiceException(ErrorCode.USER_NOT_AUTHORIZED));
 
-        mockMvc.perform(post("/api/v1/image/{uuid}/like", imageUuid))
-                .andExpect(status().isConflict());
+        mockMvc.perform(get("/api/v1/user/images")
+                        .param("size", "10")
+                        .param("page", "0")
+                        .param("protection", "public"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
-    void dislike_ValidRequest_ReturnsOk() throws Exception {
-        UUID imageUuid = UUID.randomUUID();
-        mockMvc.perform(delete("/api/v1/image/{uuid}/like", imageUuid))
+    void getOtherUserImages_ValidRequest_ReturnsImages() throws Exception {
+        GetImagesResponse response = new GetImagesResponse();
+        when(imageService.getImagesByUserId(anyLong(), anyInt(), anyInt()))
+                .thenReturn(response);
+
+        mockMvc.perform(get("/api/v1/user/{userId}/images", 1L)
+                        .param("size", "10")
+                        .param("page", "0"))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void dislike_NotLiked_ReturnsConflict() throws Exception {
-        UUID imageUuid = UUID.randomUUID();
-        doThrow(new ServiceException(ErrorCode.NOT_LIKED))
-                .when(imageService).dislikeImage(any());
+    void getOtherUserImages_UserDeleted_Returns410() throws Exception {
+        when(imageService.getImagesByUserId(anyLong(), anyInt(), anyInt()))
+                .thenThrow(new ServiceException(ErrorCode.CURRENT_USER_DELETED));
 
-        mockMvc.perform(delete("/api/v1/image/{uuid}/like", imageUuid))
-                .andExpect(status().isConflict());
+        mockMvc.perform(get("/api/v1/user/{userId}/images", 1L)
+                        .param("size", "10")
+                        .param("page", "0"))
+                .andExpect(status().isGone());
     }
 }

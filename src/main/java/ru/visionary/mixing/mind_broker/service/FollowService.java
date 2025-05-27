@@ -3,13 +3,17 @@ package ru.visionary.mixing.mind_broker.service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.visionary.mixing.generated.model.UsersResponse;
 import ru.visionary.mixing.mind_broker.entity.Follow;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.FollowRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
+import ru.visionary.mixing.mind_broker.service.mapper.UserMapper;
 import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -17,6 +21,7 @@ import ru.visionary.mixing.mind_broker.utils.SecurityContextUtils;
 public class FollowService {
     private final FollowRepository followRepository;
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
     public void follow(Long userId) {
         User currentUser = SecurityContextUtils.getAuthenticatedUser();
@@ -88,5 +93,65 @@ public class FollowService {
         }
 
         log.info("Unfollow success - {} stopped following {}", currentUser.id(), userId);
+    }
+
+    public UsersResponse getCurrentFollowers(Integer size, Integer page) {
+        User user = SecurityContextUtils.getAuthenticatedUser();
+
+        if (user == null) {
+            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+        }
+        if (!user.active()) {
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
+        }
+
+        List<User> followers = followRepository.getFollowers(user.id(), size, page);
+
+        return new UsersResponse().users(userMapper.toResponse(followers));
+    }
+
+    public UsersResponse getCurrentFollows(Integer size, Integer page) {
+        User user = SecurityContextUtils.getAuthenticatedUser();
+
+        if (user == null) {
+            throw new ServiceException(ErrorCode.USER_NOT_AUTHORIZED);
+        }
+        if (!user.active()) {
+            throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
+        }
+
+        List<User> follows = followRepository.getFollows(user.id(), size, page);
+
+        return new UsersResponse().users(userMapper.toResponse(follows));
+    }
+
+    public UsersResponse getFollowers(Long userId, Integer size, Integer page) {
+        User user = userRepository.findById(userId);
+
+        if (user == null) {
+            throw new ServiceException(ErrorCode.USER_NOT_FOUND);
+        }
+        if (!user.active()) {
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
+        }
+
+        List<User> followers = followRepository.getFollowers(user.id(), size, page);
+
+        return new UsersResponse().users(userMapper.toResponse(followers));
+    }
+
+    public UsersResponse getFollows(Long userId, Integer size, Integer page) {
+        User user = userRepository.findById(userId);
+
+        if (user == null) {
+            throw new ServiceException(ErrorCode.USER_NOT_FOUND);
+        }
+        if (!user.active()) {
+            throw new ServiceException(ErrorCode.OWNER_DELETED);
+        }
+
+        List<User> follows = followRepository.getFollows(user.id(), size, page);
+
+        return new UsersResponse().users(userMapper.toResponse(follows));
     }
 }
