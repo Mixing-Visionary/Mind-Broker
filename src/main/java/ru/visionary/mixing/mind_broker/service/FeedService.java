@@ -56,7 +56,9 @@ public class FeedService {
     private GetImagesResponse getFeedByNew(Integer size, Integer page) {
         log.debug("Fetching NEW feed - Size: {}, Page: {}", size, page);
 
-        List<ImageResponse> images = imageMapper.toResponse(feedRepository.getFeedByNew(size, page));
+        User user = SecurityContextUtils.getAuthenticatedUser();
+
+        List<ImageResponse> images = imageMapper.toResponse(feedRepository.getFeedByNew(user == null ? null : user.id(), size, page));
         log.info("Fetched {} NEW images", images.size());
 
         return new GetImagesResponse(images);
@@ -65,7 +67,9 @@ public class FeedService {
     private GetImagesResponse getFeedByPopular(Integer size, Integer page) {
         log.debug("Fetching POPULAR feed - Size: {}, Page: {}", size, page);
 
-        List<ImageResponse> images = imageMapper.toResponse(feedRepository.getFeedByPopular(size, page));
+        User user = SecurityContextUtils.getAuthenticatedUser();
+
+        List<ImageResponse> images = imageMapper.toResponse(feedRepository.getFeedByPopular(user == null ? null : user.id(), size, page));
         log.info("Fetched {} POPULAR images", images.size());
 
         return new GetImagesResponse(images);

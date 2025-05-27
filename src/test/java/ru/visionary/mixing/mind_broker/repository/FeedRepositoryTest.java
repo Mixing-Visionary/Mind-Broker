@@ -38,7 +38,7 @@ class FeedRepositoryTest extends AbstractRepositoryTest {
         imageRepository.save(createImage(userId, Protection.PUBLIC));
         imageRepository.save(createImage(userId, Protection.PRIVATE));
 
-        List<Image> result = feedRepository.getFeedByNew(10, 0);
+        List<Image> result = feedRepository.getFeedByNew(null, 10, 0);
 
         assertEquals(1, result.size());
         assertEquals(Protection.PUBLIC, result.get(0).protection());
@@ -56,7 +56,7 @@ class FeedRepositoryTest extends AbstractRepositoryTest {
         likeRepository.save(user1, image2);
         likeRepository.save(user2, image2);
 
-        List<Image> result = feedRepository.getFeedByPopular(10, 0);
+        List<Image> result = feedRepository.getFeedByPopular(null, 10, 0);
         assertEquals(2, result.size());
         assertEquals(image2, result.get(0).id());
     }

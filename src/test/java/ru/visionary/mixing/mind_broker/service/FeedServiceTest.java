@@ -38,13 +38,13 @@ class FeedServiceTest {
 
     @Test
     void getFeed_NewSort_CallsCorrectMethod() {
-        when(feedRepository.getFeedByNew(10, 0))
+        when(feedRepository.getFeedByNew(null, 10, 0))
                 .thenReturn(Collections.emptyList());
 
         GetImagesResponse response = feedService.getFeed("NEW", 10, 0);
 
         assertNotNull(response);
-        verify(feedRepository).getFeedByNew(10, 0);
+        verify(feedRepository).getFeedByNew(null, 10, 0);
     }
 
     @Test
@@ -73,7 +73,7 @@ class FeedServiceTest {
 
     @Test
     void getFeed_NewSortWithEmptyResult_ReturnsEmptyList() {
-        when(feedRepository.getFeedByNew(anyInt(), anyInt()))
+        when(feedRepository.getFeedByNew(isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of());
         when(imageMapper.toResponse(anyList()))
                 .thenReturn(List.of());
@@ -88,7 +88,7 @@ class FeedServiceTest {
         Image mostPopular = createTestImage(3L);
         Image leastPopular = createTestImage(2L);
 
-        when(feedRepository.getFeedByPopular(anyInt(), anyInt()))
+        when(feedRepository.getFeedByPopular(isNull(), anyInt(), anyInt()))
                 .thenReturn(List.of(mostPopular, leastPopular));
 
         GetImagesResponse response = feedService.getFeed("POPULAR", 10, 0);
@@ -113,7 +113,7 @@ class FeedServiceTest {
 
     @Test
     void getFeed_PaginationSecondPage_ReturnsLimitedResults() {
-        when(feedRepository.getFeedByNew(10, 1))
+        when(feedRepository.getFeedByNew(null, 10, 1))
                 .thenReturn(List.of(createTestImage(1L)));
         when(imageMapper.toResponse(anyList()))
                 .thenReturn(List.of(new ImageResponse()));
