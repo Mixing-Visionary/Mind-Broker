@@ -10,6 +10,7 @@ import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
+import ru.visionary.mixing.mind_broker.repository.LikeRepository;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.service.mapper.UserMapper;
@@ -24,6 +25,7 @@ import java.util.UUID;
 public class UserService {
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final LikeRepository likeRepository;
     private final MinioService minioService;
     private final PasswordEncoder passwordEncoder;
     private final UserMapper userMapper;
@@ -42,8 +44,10 @@ public class UserService {
             throw new ServiceException(ErrorCode.OWNER_DELETED);
         }
 
+        long likes = likeRepository.getUserLikesCount(userId);
+
         log.info("Successfully retrieved user: {}", userId);
-        return userMapper.toResponse(user);
+        return userMapper.toResponse(user).likes(likes);
     }
 
     public UserResponse getCurrentUser() {
@@ -59,8 +63,10 @@ public class UserService {
             throw new ServiceException(ErrorCode.CURRENT_USER_DELETED);
         }
 
+        long likes = likeRepository.getUserLikesCount(user.id());
+
         log.info("Successfully retrieved user");
-        return userMapper.toResponse(user);
+        return userMapper.toResponse(user).likes(likes);
     }
 
     @Transactional

@@ -16,6 +16,7 @@ import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
 import ru.visionary.mixing.mind_broker.repository.ImageRepository;
+import ru.visionary.mixing.mind_broker.repository.LikeRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.service.mapper.ImageMapper;
 import ru.visionary.mixing.mind_broker.utils.ImageUtils;
@@ -31,6 +32,7 @@ import java.util.UUID;
 public class ImageService {
     private final ImageRepository imageRepository;
     private final UserRepository userRepository;
+    private final LikeRepository likeRepository;
     private final MinioService minioService;
     private final ImageMapper imageMapper;
 
@@ -102,8 +104,13 @@ public class ImageService {
             throw new ServiceException(ErrorCode.ACCESS_FORBIDDEN);
         }
 
+        Boolean liked = null;
+        if (user != null) {
+            liked = likeRepository.isImageLiked(user.id(), uuid);
+        }
+
         log.info("Successfully retrieved image: {}", uuid);
-        return imageMapper.toResponse(imageRepository.findById(uuid));
+        return imageMapper.toResponse(imageRepository.findById(uuid)).liked(liked);
     }
 
     public GetImagesResponse getImagesForCurrentUser(int size, int page, String protection) {

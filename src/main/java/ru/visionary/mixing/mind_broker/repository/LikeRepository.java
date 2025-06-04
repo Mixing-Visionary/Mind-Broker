@@ -22,6 +22,25 @@ public class LikeRepository {
             VALUES (:userId, :image, current_timestamp)
             """;
 
+    private static final String GET_USER_LIKES_COUNT = """
+            SELECT count(*)
+            FROM users u
+                JOIN image i ON u.id = i.owner
+                JOIN likes l ON i.id = l.image
+            WHERE u.id = :userId
+            """;
+
+    private static final String IS_IMAGE_LIKED = """
+            SELECT exists (
+                SELECT 1
+                FROM likes l
+                    JOIN users u ON l.user_id = u.id
+                    JOIN image i ON l.image = i.id
+                WHERE u.id = :userId
+                    AND i.id = :imageUuid
+            )
+            """;
+
     private static final String DELETE_LIKE = """
             DELETE FROM likes
             WHERE user_id = :userId AND image = :image
@@ -38,6 +57,21 @@ public class LikeRepository {
             log.warn("Duplicate like attempt - user {} already liked image {}", userId, imageUuid);
             throw new ServiceException(ErrorCode.ALREADY_LIKED);
         }
+    }
+
+    public long getUserLikesCount(long userId) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId);
+
+        return jdbcTemplate.queryForObject(GET_USER_LIKES_COUNT, params, Long.class);
+    }
+
+    public boolean isImageLiked(long userId, UUID imageUuid) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("userId", userId)
+                .addValue("imageUuid", imageUuid);
+
+        return jdbcTemplate.queryForObject(IS_IMAGE_LIKED, params, Boolean.class);
     }
 
     public int deleteByUserAndImage(Long userId, UUID imageUuid) {

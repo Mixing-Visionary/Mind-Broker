@@ -13,6 +13,7 @@ import ru.visionary.mixing.generated.model.UserResponse;
 import ru.visionary.mixing.mind_broker.entity.User;
 import ru.visionary.mixing.mind_broker.exception.ErrorCode;
 import ru.visionary.mixing.mind_broker.exception.ServiceException;
+import ru.visionary.mixing.mind_broker.repository.LikeRepository;
 import ru.visionary.mixing.mind_broker.repository.RefreshTokenRepository;
 import ru.visionary.mixing.mind_broker.repository.UserRepository;
 import ru.visionary.mixing.mind_broker.service.mapper.UserMapperImpl;
@@ -30,6 +31,8 @@ class UserServiceTest {
     private UserRepository userRepository;
     @Mock
     private RefreshTokenRepository refreshTokenRepository;
+    @Mock
+    private LikeRepository likeRepository;
     @Mock
     private MinioService minioService;
     @Mock
